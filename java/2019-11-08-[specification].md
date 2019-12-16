@@ -192,6 +192,54 @@ Double 的 toString，而 Double 的 toString 按 double 的实际能表达的�
 	BigDecimal recommend1 = new BigDecimal("0.1");
 	BigDecimal recommend2 = BigDecimal.valueOf(0.1);
 
+11、关于基本数据类型与包装数据类型的使用标准如下：
+
+1） 【强制】所有的 POJO 类属性必须使用包装数据类型。
+
+2） 【强制】RPC 方法的返回值和参数必须使用包装数据类型。
+
+3） 【推荐】所有的局部变量使用基本数据类型
+
+12、定义 DO/DTO/VO 等 POJO 类时，不要设定任何属性默认值。
+
+13、序列化类新增属性时，请不要修改 serialVersionUID 字段，避免反序列失败；如果
+完全不兼容升级，避免反序列化混乱，那么请修改 serialVersionUID 值。
+
+14、构造方法里面禁止加入任何业务逻辑，如果有初始化逻辑，请放在 init 方法中。
+
+15、POJO 类必须写 toString 方法。使用 IDE 中的工具：source> generate toString
+时，如果继承了另一个 POJO 类，注意在前面加一下 super.toString。
+
+16、禁止在 POJO 类中，同时存在对应属性 xxx 的 isXxx()和 getXxx()方法。
+说明：框架在调用属性 xxx 的提取方法时，并不能确定哪个方法一定是被优先调用到。
+故：在设计是否存在的字段是，不要在前面加is，数据库中设置为含有is,POJO中不含，利用mybatis 的ResultMap 进行关联。
+
+17、使用索引访问用 String 的 split 方法得到的数组时，需做最后一个分隔符后有无内
+容的检查，否则会有抛 IndexOutOfBoundsException 的风险。
+
+### 1.5.集合处理规范
+1、关于 hashCode 和 equals 的处理，遵循如下规则：
+
+1） 只要覆写 equals，就必须覆写 hashCode。
+
+2） 因为 Set 存储的是不重复的对象，依据 hashCode 和 equals 进行判断，所以 Set 存储的对象必须覆 写这两个方法。
+
+3） 如果自定义对象作为 Map 的键，那么必须覆写 hashCode 和 equals。
+
+2、ArrayList 的 subList 结果不可强转成 ArrayList，否则会抛出 ClassCastException 异 常，即 java.util.RandomAccessSubList cannot be cast to java.util.ArrayList。
+
+说明：subList 返回的是 ArrayList 的内部类 SubList，并不是 ArrayList 而是 ArrayList 的一个视图，对
+于 SubList 子列表的所有操作最终会反映到原列表上
+
+3、使用 Map 的方法 keySet()/values()/entrySet()返回集合对象时，不可以对其进行添
+加元素操作，否则会抛出 UnsupportedOperationException 异常。
+
+4、Collections 类返回的对象，如：emptyList()/singletonList()等都是 immutable 
+list，不可对其进行添加或者删除元素的操作。
+
+5、在 subList 场景中，高度注意对原集合元素的增加或删除，均会导致子列表的遍
+历、增加、删除产生 ConcurrentModificationException 异常。
+
 ## 五、编程规约
 ### 5.1.建表约束
 1、表达是否概念的字段，使用is_xxx的方式命名，数据类型使用unsigned tinyint(1为是，0为否)
