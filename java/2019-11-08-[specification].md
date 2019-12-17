@@ -240,6 +240,64 @@ list，不可对其进行添加或者删除元素的操作。
 5、在 subList 场景中，高度注意对原集合元素的增加或删除，均会导致子列表的遍
 历、增加、删除产生 ConcurrentModificationException 异常。
 
+6、使用集合转数组的方法，必须使用集合的 toArray(T[] array)，传入的是类型完全一
+致、长度为 0 的空数组。
+
+反例：直接使用 toArray 无参方法存在问题，此方法返回值只能是 Object[]类，若强转其它类型数组将出
+现 ClassCastException 错误。
+
+正例：
+
+	List<String> list = new ArrayList<>(2);
+	list.add("guan");
+	list.add("bao");
+	String[] array = list.toArray(new String[0]);
+
+ 说明：使用 toArray 带参方法，数组空间大小的 length： 
+1） 等于 0，动态创建与 size 相同的数组，性能最好。
+
+2） 大于 0 但小于 size，重新创建大小等于 size 的数组，增加 GC 负担。
+
+3） 等于 size，在高并发情况下，数组创建完成之后，size 正在变大的情况下，负面影响与上相同。
+
+4） 大于 size，空间浪费，且在 size 处插入 null 值，存在 NPE 隐患
+
+7、在使用 Collection 接口任何实现类的 addAll()方法时，都要对输入的集合参数进行
+NPE 判断。
+
+说明：在 ArrayList#addAll 方法的第一行代码即 Object[] a = c.toArray(); 其中 c 为输入集合参数，如果
+为 null，则直接抛出异常。
+
+8、使用工具类 Arrays.asList()把数组转换成集合时，不能使用其修改集合相关的方
+法，它的 add/remove/clear 方法会抛出 UnsupportedOperationException 异常。
+
+9、泛型通配符<? extends T>来接收返回的数据，此写法的泛型集合不能使用 add 方 法，而<? super T>不能使用 get 方法，作为接口调用赋值时易出错。
+
+10、在无泛型限制定义的集合赋值给泛型限制的集合时，在使用集合元素时，需要进行
+instanceof 判断，避免抛出 ClassCastException 异常。
+
+11、不要在 foreach 循环里进行元素的 remove/add 操作。remove 元素请使用
+Iterator 方式，如果并发操作，需要对 Iterator 对象加锁。
+
+12、集合初始化时，指定集合初始值大小。
+
+说明：HashMap 使用 HashMap(int initialCapacity) 初始化。
+
+正例：initialCapacity = (需要存储的元素个数 / 负载因子) + 1。注意负载因子（即 loader factor）默认
+为 0.75，如果暂时无法确定初始值大小，请设置为 16（即默认值）。
+
+反例：HashMap 需要放置 1024 个元素，由于没有设置容量初始大小，随着元素不断增加，容量 7 次被
+迫扩大，resize 需要重建 hash 表，严重影响性能。
+
+13、使用 entrySet 遍历 Map 类集合 KV，而不是 keySet 方式进行遍历。
+
+说明：keySet 其实是遍历了 2 次，一次是转为 Iterator 对象，另一次是从 hashMap 中取出 key 所对应
+的 value。而 entrySet 只是遍历了一次就把 key 和 value 都放到了 entry 中，效率更高。如果是 JDK8，
+使用 Map.forEach 方法。
+
+正例：values()返回的是 V 值集合，是一个 list 集合对象；keySet()返回的是 K 值集合，是一个 Set 集合
+对象；entrySet()返回的是 K-V 值组合集合。	
+
 ## 五、编程规约
 ### 5.1.建表约束
 1、表达是否概念的字段，使用is_xxx的方式命名，数据类型使用unsigned tinyint(1为是，0为否)
