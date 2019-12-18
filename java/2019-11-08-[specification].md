@@ -298,6 +298,42 @@ Iterator 方式，如果并发操作，需要对 Iterator 对象加锁。
 正例：values()返回的是 V 值集合，是一个 list 集合对象；keySet()返回的是 K 值集合，是一个 Set 集合
 对象；entrySet()返回的是 K-V 值组合集合。	
 
+### 1.6.并发处理
+1、获取单例对象需要保证线程安全，其中的方法也要保证线程安全。
+说明：资源驱动类、工具类、单例工厂类都需要注意。
+
+2、创建线程或线程池时请指定有意义的线程名称，方便出错时回溯。
+
+3、线程资源必须通过线程池提供，不允许在应用中自行显式创建线程。
+
+说明：线程池的好处是减少在创建和销毁线程上所消耗的时间以及系统资源的开销，解决资源不足的问
+题。如果不使用线程池，有可能造成系统创建大量同类线程而导致消耗完内存或者“过度切换”的问题。
+
+4、线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式，这
+样的处理方式让写的同学更加明确线程池的运行规则，规避资源耗尽的风险。
+
+说明：Executors 返回的线程池对象的弊端如下：
+1） FixedThreadPool 和 SingleThreadPool：
+允许的请求队列长度为 Integer.MAX_VALUE，可能会堆积大量的请求，从而导致 OOM。 
+
+2） CachedThreadPool：
+允许的创建线程数量为 Integer.MAX_VALUE，可能会创建大量的线程，从而导致 OOM。
+
+5、SimpleDateFormat 是线程不安全的类，一般不要定义为 static 变量，如果定义为
+static，必须加锁，或者使用 DateUtils 工具类。
+正例：注意线程安全，使用 DateUtils。亦推荐如下处理：
+
+	private static final ThreadLocal<DateFormat> df = new ThreadLocal<DateFormat>() { 
+	   @Override 
+	   protected DateFormat initialValue() { 
+	   return new SimpleDateFormat("yyyy-MM-dd"); 
+	} 
+	};
+ 
+说明：如果是 JDK8 的应用，可以使用 Instant 代替 Date，LocalDateTime 代替 Calendar，
+DateTimeFormatter 代替 SimpleDateFormat，官方给出的解释：simple beautiful strong immutable 
+thread-safe。
+
 ## 五、编程规约
 ### 5.1.建表约束
 1、表达是否概念的字段，使用is_xxx的方式命名，数据类型使用unsigned tinyint(1为是，0为否)
