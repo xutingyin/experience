@@ -334,6 +334,55 @@ static，必须加锁，或者使用 DateUtils 工具类。
 DateTimeFormatter 代替 SimpleDateFormat，官方给出的解释：simple beautiful strong immutable 
 thread-safe。
 
+### 1.7 控制语句
+1、在一个 switch 块内，每个 case 要么通过 continue/break/return 等来终止，要么
+注释说明程序将继续执行到哪一个 case 为止；在一个 switch 块内，都必须包含一个
+default 语句并且放在最后，即使它什么代码也没有。
+
+说明：注意 break 是退出 switch 语句块，而 return 是退出方法体。
+
+2、当 switch 括号内的变量类型为 String 并且此变量为外部参数时，必须先进行 null
+  判断。
+
+3、在 if/else/for/while/do 语句中必须使用大括号。
+
+  说明：即使只有一行代码，避免采用单行的编码方式：if (condition) statements;
+  
+4、在高并发场景中，避免使用”等于”判断作为中断或退出的条件。
+
+  说明：如果并发控制没有处理好，容易产生等值判断被“击穿”的情况，使用大于或小于的区间判断条件
+  来代替 。
+5、表达异常的分支时，少用 if-else 方式，这种方式可以改写成：
+
+      if (condition) { 
+       ... 
+       return obj; 
+      } 
+      // 接着写 else 的业务逻辑代码;
+       
+  说明：如果非使用 if()...else if()...else...方式表达逻辑，避免后续代码维护困难，【强制】请勿超过 3 层。
+  
+  正例：超过 3 层的 if-else 的逻辑判断代码可以使用卫语句、策略模式、状态模式等来实现，其中卫语句
+  即代码逻辑先考虑失败、异常、中断、退出等直接返回的情况，以方法多个出口的方式，解决代码中判断
+  分支嵌套的问题，这是逆向思维的体现。
+  示例如下：
+      
+      public void findBoyfriend(Man man) {
+       if (man.isUgly()) {
+       System.out.println("本姑娘是外貌协会的资深会员");
+       return;
+       }
+       if (man.isPoor()) {
+       System.out.println("贫贱夫妻百事哀");
+       return;
+       }
+       if (man.isBadTemper()) {
+       System.out.println("银河有多远，你就给我滚多远");
+       return;
+       }
+      System.out.println("可以先交往一段时间看看");
+      } 
+
 ## 五、编程规约
 ### 5.1.建表约束
 1、表达是否概念的字段，使用is_xxx的方式命名，数据类型使用unsigned tinyint(1为是，0为否)
