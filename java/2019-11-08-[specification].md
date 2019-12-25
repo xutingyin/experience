@@ -491,10 +491,57 @@ default 语句并且放在最后，即使它什么代码也没有。
    简短信息” 。
   
 13、避免出现重复的代码（Don't Repeat Yourself），即 DRY 原则。
-### 2.1 日志处理
+### 2.2 日志处理
 1、应用中不可直接使用日志系统（Log4j、 Logback）中的 API，而应依赖使用日志框架
   SLF4J 中的 API，使用门面模式的日志框架，有利于维护和各个类的日志处理方式统一。
+  
+2、所有日志文件至少保存 15 天，因为有些异常具备以“周”为频次发生的特点。网络
+  运行状态、安全相关信息、系统监测、管理后台操作、用户敏感操作需要留存相关的网络日
+  志不少于 6 个月。
+  
+3、应用中的扩展日志（如打点、临时监控、访问日志等）命名方式：
+  appName_logType_logName.log。logType:日志类型，如 stats/monitor/access 等；logName:日志
+  描述。这种命名的好处：通过文件名就可知道日志文件属于什么应用，什么类型，什么目的，也有利于归
+  类查找
+  
+4、在日志输出时，字符串变量之间的拼接使用占位符的方式。
+  说明：因为 String 字符串的拼接会使用 StringBuilder 的 append()方式，有一定的性能损耗。使用占位符
+  仅是替换动作，可以有效提升性能。
+  
+5、对于 trace/debug/info 级别的日志输出，必须进行日志级别的开关判断。
+  说明：虽然在 debug(参数)的方法体内第一行代码 isDisabled(Level.DEBUG_INT)为真时（Slf4j 的常见实
+  现 Log4j 和 Logback），就直接 return，但是参数可能会进行字符串拼接运算。此外，如果
+  debug(getName())这种参数内有 getName()方法调用，无谓浪费方法调用的开销。
 
+例如：
+
+     // 如果判断为真，那么可以输出 trace 和 debug 级别的日志
+     if (logger.isDebugEnabled()) {
+     logger.debug("Current ID is: {} and name is: {}", id, getName());
+     }
+
+6、避免重复打印日志，浪费磁盘空间，务必在 log4j.xml 中设置 additivity=false。
+
+  正例：
+    
+    <logger name="com.taobao.dubbo.config" additivity="false">
+
+7、异常信息应该包括两类信息：案发现场信息和异常堆栈信息。如果不处理，那么通 过关键字 throws 往上抛出。
+
+  正例：logger.error(各类参数或者对象 toString() + "_" + e.getMessage(), e);
+
+## 三、单元测试
+1、好的单元测试必须遵守 AIR 原则。
+
+  说明：单元测试在线上运行时，感觉像空气（AIR）一样并不存在，但在测试质量的保障上，却是非常关
+  键的。好的单元测试宏观上来说，具有自动化、独立性、可重复执行的特点。
+  
+  ⚫ A：Automatic（自动化）
+  
+  ⚫ I：Independent（独立性）
+  
+  ⚫ R：Repeatable（可重复） 
+  
 ## 五、编程规约
 ### 5.1.建表约束
 1、表达是否概念的字段，使用is_xxx的方式命名，数据类型使用unsigned tinyint(1为是，0为否)
