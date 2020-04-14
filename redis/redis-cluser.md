@@ -234,3 +234,13 @@ yum -y install ruby ruby-devel rubygems rpm-build
 
     redis-cli --cluster  create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:8001 127.0.0.1:8002 127.0.0.1:8003 --cluster-replicas 1
 主节点在前，从节点在后。其中--cluster-replicas参数用来指定一个主节点带有的从节点个数，如上--cluster-replicas 1即表示 1 个主节点有 1 个从节点。
+
+
+后语：
+1、如果在操作过程中，需要将搭建好的集群删除，重新搭建，推荐的方案：
+
+    ① ps -ef |grep redis 查看启动的所有redis 进程ID，然后 全部 kill 掉
+    ②/usr/local/redis-cluster/data 目录下的数据文件全删除
+    ③重新执行 redis-cli --cluster  create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:8001 127.0.0.1:8002 127.0.0.1:8003 --cluster-replicas 1 自动创建集群命令
+  
+2、学习过程中尽量使用手动创建的方式，这样能够了解更多的细节；熟练之后，生产环境采用自动创建方式，简单，避免出错。   
