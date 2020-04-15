@@ -67,130 +67,195 @@
     insert into score values('07' , '03' , 98);
 
 ## 经典查询练习
-1、查询" 01 “课程比” 02 "课程成绩高的学生的信息及课程分数
 
-    select t.student_id,s.name,t.score
+
+-- 10、查询学过「张三」老师授课的同学的信息
+
+-- 庖丁解牛：有多种处理方法
+
+-- 方法1：
+-- 查询出张三老师的教师id
+
+    SELECT id FROM teacher WHERE name = '张三'
+-- 张三老师教的什么课 ，查询出课程id
     
-            from student s right JOIN (
+    SELECT id FROM course WHERE teacher_id = (SELECT id FROM teacher WHERE name = '张三')
+-- 哪些学生选了这些课,查询出学生id
     
-            SELECT sc1.student_id,sc1.score from 
-                        (SELECT student_id,score FROM score where cource_id = '01')sc1
-                        inner join
-                        (SELECT student_id,score FROM score where cource_id = '02')sc2
-                        ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
-            )t on s.id = t.student_id
-    
-     -- 庖丁解牛：
-     -- 查询选了 01 课程的学生 ：SELECT student_id,score FROM score where cource_id = '01'
-     -- 查询选了 02 课程的学生 ：SELECT student_id,score FROM score where cource_id = '02'
-     -- 查询同时选了这两门课的学生
-     
-     SELECT sc1.student_id,sc1.score from 
-                        (SELECT student_id,score FROM score where cource_id = '01')sc1
-                        inner join
-                        (SELECT student_id,score FROM score where cource_id = '02')sc2
-                        ON sc1.student_id = sc2.student_id
-                        
-        -- 查询 01课程 成绩比 02课程 高的学生信息及分数
-            SELECT sc1.student_id,sc1.score from 
-                        (SELECT student_id,score FROM score where cource_id = '01')sc1
-                        inner join
-                        (SELECT student_id,score FROM score where cource_id = '02')sc2
-                        ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
-                        
-                        
-         -- 如果题目是包含学生的姓名信息，则再联合student表进行查 
-         
-          select t.student_id,s.name,t.score
-    
-            from student s right JOIN (
-    
-            SELECT sc1.student_id,sc1.score from 
-                        (SELECT student_id,score FROM score where cource_id = '01')sc1
-                        inner join
-                        (SELECT student_id,score FROM score where cource_id = '02')sc2
-                        ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
-            )t on s.id = t.student_id
-         
-
-2、查询同时存在" 01 “课程和” 02 "课程的情况
-
-    SELECT * FROM (SELECT student_id, score FROM score WHERE cource_id = '01') sc1,
-     (SELECT student_id, score FROM score WHERE cource_id = '02') sc2 WHERE
-     sc1.student_id = sc2.student_id;
-    或者
-    SELECT * FROM (SELECT student_id, score FROM score WHERE cource_id = '01') sc1
-     INNER JOIN (SELECT student_id, score FROM score WHERE cource_id = '02') sc2 ON
-     sc1.student_id = sc2.student_id;
-
-3、查询存在" 01 “课程但可能不存在” 02 "课程的情况(不存在时显示为 null )
-
-    SELECT * FROM (SELECT student_id, score FROM score WHERE cource_id = '01') sc1
-     LEFT JOIN (SELECT student_id, score FROM score WHERE cource_id = '02') sc2 ON
-     sc1.student_id = sc2.student_id;
-
-4、查询不存在" 01 “课程但存在” 02 "课程的情况
-
-    SELECT * FROM (SELECT student_id, score FROM score WHERE cource_id = '01') sc1
-     RIGHT JOIN (SELECT student_id, score FROM score WHERE cource_id = '02') sc2 ON
-     sc1.student_id = sc2.student_id WHERE sc1.student_id IS NULL;
-
-    SELECT * FROM score sc WHERE sc.cource_id = '02' AND
-     sc.student_id NOT IN (SELECT student_id FROM score WHERE cource_id = '01');
- 
-5、查询平均成绩大于等于 60 分的同学的学生编号和学生姓名和平均成绩
-
-    SELECT a.student_id, s.name, a.avg_score FROM
-     (SELECT student_id, AVG(score) avg_score FROM score GROUP BY student_id) a
-     INNER JOIN student s ON s.id = a.student_id
-     WHERE a.avg_score >= 60;
-
-
-    SELECT a.student_id, s.name, a.avg_score FROM
-     (SELECT student_id, AVG(score) avg_score FROM score
-     GROUP BY student_id HAVING avg_score > 60) a
-     INNER JOIN student s ON s.id = a.student_id;
-
-
-6、查询在 SC 表存在成绩的学生信息
-
-    SELECT * FROM student s INNER JOIN (SELECT DISTINCT student_id id FROM score) sc ON sc.id = s.id;
-     
-    SELECT DISTINCT s.* FROM student s, score sc WHERE s.id = sc.student_id;
- 
-7、查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩(没成绩的显示为 null )
-
-    SELECT s.id, s.name, sc.count, sc.sum FROM student s LEFT JOIN
-     (SELECT student_id id, COUNT(student_id) count, SUM(score) sum FROM score GROUP BY student_id) sc
-     ON s.id = sc.id;
-
-8、查有成绩的学生信息
-
-    SELECT * FROM student s INNER JOIN
-     (SELECT DISTINCT student_id id FROM score) sc
-     ON s.id = sc.id;
-
-    SELECT * FROM student s WHERE EXISTS (SELECT 1 FROM score sc WHERE sc.student_id = s.id);
-     
-    SELECT * FROM student s WHERE S.id IN (SELECT student_id FROM score);
- 
-9、查询「李」姓老师的数量
-    
-    SELECT COUNT(*) FROM teacher WHERE name LIKE '李%';
- 
-10、 查询学过「张三」老师授课的同学的信息
-    
-    SELECT * FROM student s WHERE s.id IN
-     (SELECT student_id FROM score sc WHERE
-     sc.cource_id = (SELECT id FROM course WHERE teacher_id = (SELECT id FROM teacher WHERE name = '张三')));
+    SELECT student_id FROM score sc WHERE
+     sc.cource_id in (SELECT id FROM course WHERE teacher_id = (SELECT id FROM teacher WHERE name = '张三'))
+		 
+-- 根据学生id查询出学生的信息	 
+  
+    SELECT * FROM student s WHERE s.id IN(SELECT student_id FROM score sc 
+    WHERE sc.cource_id in (SELECT id FROM course 
+    WHERE teacher_id = (SELECT id FROM teacher WHERE name = '张三')));
+		 
+		  
+   
+ -- 方法2：  
+	-- 直接三张表 联合查询 [使用逗号和inner join 是等价的]
     
     SELECT s.* FROM student s, teacher t, course c, score sc WHERE
-     t.name = '张三' AND t.id = c.teacher_id AND c.id = sc.cource_id AND sc.student_id = s.id;
- 
+    t.id = c.teacher_id AND c.id = sc.cource_id AND sc.student_id = s.id and  t.name = '张三';
+		 
+ -- 或者
+		
+		 SELECT s.* from student s 
+		 INNER JOIN score sc on s.id = sc.student_id
+		 INNER JOIN course c on sc.cource_id = c.id
+		 INNER JOIN teacher t on t.id = c.teacher_id
+		 and t.`name` ='张三'
+
+
+
+-- 9、查询「李」姓老师的数量
+
+    SELECT count(*) from teacher where `name` like '李%';
+
+-- 庖丁解牛：
+-- 考察使用 count()统计数量 和 like 进行模糊匹配
+
+
+-- 7、查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩(没成绩的显示为 null )
+
+    SELECT s.id,s.`name`,sc.cource_num,sc.total_score  from 
+    (SELECT  student_id, count(cource_id) cource_num, sum(score) total_score from score GROUP BY student_id)sc
+    right join student s
+    on sc.student_id = s.id 
+-- 庖丁解牛：
+-- 根据每个学生进行分组，统计出每个学生的选课总数-count(),课程总成绩sum()
+
+    SELECT  student_id, count(cource_id) cource_num, sum(score) total_score from score GROUP BY student_id
+-- 再联合 student 表进行关联查询出学生姓名,没成绩的用null 表示，故说明应该以student 表为主
+
+
+-- 6、查询在 SC 表存在成绩的学生信息
+
+-- 庖丁解牛
+-- 题目需要查询出student 表中存在有成绩的学生信息
+
+-- 很多种方法：
+-- 第1种： 学生表中的id 在 成绩表里的，则代表有成绩 -- 这里使用 in
+
+	SELECT * from student where id in (
+	SELECT DISTINCT student_id from score
+	)
+	
+-- 第2种：能够用in 的地方就能使用 exists 进行替换
+	
+	SELECT * from student where  EXISTS (
+		SELECT student_id from score where student.id = score.student_id
+	)	
+	
+-- 第3种：两张表都有的则代表该生有成绩 -- 这里使用 inner join 
+
+    SELECT * FROM student s INNER JOIN (SELECT DISTINCT student_id id FROM score) sc ON sc.id = s.id;
+   
+-- 或者	 
+    SELECT DISTINCT s.* FROM student s, score sc WHERE s.id = sc.student_id;
+		
+-- 第4种：以成绩表为主，成绩表中有的，则代表该生有成绩
+
+		select * from student s RIGHT JOIN (
+		SELECT DISTINCT student_id from score
+		) sc
+		on s.id = sc.student_id
+
+
+
+-- 5、查询平均成绩大于等于 60 分的同学的学生编号和学生姓名和平均成绩
+    
+    SELECT t.student_id,s.`name`,t.avgScore from 
+    (SELECT student_id,AVG(score) avgScore  from score sc GROUP BY student_id HAVING  avgScore > 60) t
+    left JOIN student s
+    on t.student_id = s.id
+
+-- 庖丁解牛：
+-- 查询出平均成绩大于60分的学生编号和平均成绩  SELECT student_id,AVG(score) avgScore  from score sc GROUP BY student_id HAVING  avgScore > 60
+-- 联合 student 表查出学生姓名，以上一步查出来的结果为主，所以采用left join -- 个人觉得这里采用 inner join 也是可以的
+
+
+-- 4、查询不存在" 01 “课程但存在” 02 "课程的情况
+
+    SELECT sc1.student_id 01studentid,sc2.student_id 02studentid,sc1.cource_id 01courceid,sc1.score 01score,sc2.cource_id 02courceid,sc2.score 02score from 
+					(SELECT student_id,cource_id,score FROM score where cource_id = '01')sc1
+					right join
+					(SELECT student_id,cource_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id  where sc1.student_id is null
+					
+					
+--  另解：
+    
+    SELECT * from score where cource_id = '02' and  student_id not in (SELECT student_id from score where cource_id = '01')
+
+
+-- 庖丁解牛 ： 考察right join的用法，right join 以右表为主，左表没有的数据，用null表示
+-- right join 和 left join 之间可以相互转换
+
+-- 3、查询存在" 01 “课程但可能不存在” 02 "课程的情况(不存在时显示为 null )
+    
+    SELECT sc1.student_id,sc1.cource_id 01courceid,sc1.score 01score,sc2.cource_id 02courceid,sc2.score 02score from 
+					(SELECT student_id,cource_id,score FROM score where cource_id = '01')sc1
+					left join
+					(SELECT student_id,cource_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id 
+
+-- 庖丁解牛： 考察left JOIN 的用法，Left join 以左表为主，右表没有的数据显示null
+
+
+-- 2、查询同时存在" 01 “课程和” 02 "课程的情况 
+    
+    SELECT sc1.student_id,sc1.score from 
+					(SELECT student_id,score FROM score where cource_id = '01')sc1
+					INNER join
+					(SELECT student_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id 
+-- 庖丁解牛 ：这里考察的是inner join 的用法，两个结果集共同拥有的交集
+
+
+-- 1、查询" 01 “课程比” 02 "课程成绩高的学生的信息及课程分数
+
+    select t.student_id,s.name,t.score
+		from student s right JOIN (
+		SELECT sc1.student_id,sc1.score from 
+					(SELECT student_id,score FROM score where cource_id = '01')sc1
+					inner join
+					(SELECT student_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
+		)t on s.id = t.student_id
+
+ -- 庖丁解牛：
+ -- 查询选了 01 课程的学生 ：SELECT student_id,score FROM score where cource_id = '01'
+ -- 查询选了 02 课程的学生 ：SELECT student_id,score FROM score where cource_id = '02'
+ -- 查询同时选了这两门课的学生
+
+    SELECT sc1.student_id,sc1.score from 
+					(SELECT student_id,score FROM score where cource_id = '01')sc1
+					inner join
+					(SELECT student_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id
+-- 查询 01课程 成绩比 02课程 高的学生信息及分数
+    
+    SELECT sc1.student_id,sc1.score from 
+			(SELECT student_id,score FROM score where cource_id = '01')sc1
+			inner join
+			(SELECT student_id,score FROM score where cource_id = '02')sc2
+			ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
+-- 如果题目是包含学生的姓名信息，则再联合student表进行查 
+	 
+	  select t.student_id,s.name,t.score
+		from student s right JOIN (
+		SELECT sc1.student_id,sc1.score from 
+					(SELECT student_id,score FROM score where cource_id = '01')sc1
+					inner join
+					(SELECT student_id,score FROM score where cource_id = '02')sc2
+					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
+		)t on s.id = t.student_id
 11、查询没有学全所有课程的同学的信息
 
     SELECT s.* FROM student s WHERE s.id NOT IN
-     (SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) = (SELECT COUNT(*) FROM course));
+        (SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) = (SELECT COUNT(*) FROM course));
      
 12、查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息
 
@@ -202,7 +267,6 @@
     SELECT student.* FROM student WHERE id IN
      (SELECT student_id FROM score sc WHERE sc.cource_id IN
      (SELECT cource_id FROM score sc1 WHERE sc1.student_id = '01')) AND id <> '01';
-
 13、查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
 
     SELECT s.* FROM student s INNER JOIN
