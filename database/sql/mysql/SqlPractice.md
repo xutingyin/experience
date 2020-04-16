@@ -69,10 +69,92 @@
 ## 经典查询练习
 
 
+
+-- 15、查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+
+-- 庖丁解牛： where 、having 的联合使用
+-- 从分数表中 按学生分组，查询分数小于60 的学生id，平均分
+
+     SELECT student_id,AVG(score) avg_score , count(*)from score  where score < 60 GROUP BY student_id
+-- 再对上述结果集进行条件筛选，筛选条件为有两门课及其以上
+    
+    SELECT student_id,AVG(score) avg_score,count(*)from score  where score < 60 GROUP BY student_id HAVING count(*) >= 2
+
+-- 联合学生表 查询出学生姓名
+    
+    SELECT s.id,s.name,t.avg_score from student s 
+    INNER JOIN(
+    SELECT student_id,AVG(score) avg_score from score  where score < 60 GROUP BY student_id HAVING count(*) >= 2)t
+    on s.id = t.student_id
+-- 14、查询没学过"张三"老师讲授的任一门课程的学生姓名
+-- 庖丁解牛：not in 的使用
+-- 张三老师讲授了哪些课
+
+    SELECT id from course where teacher_id = (
+     SELECT teacher_id from teacher where `name` ='张三'
+    )
+-- 查询分数表中有上述课程的学生id
+  
+    SELECT student_id from score where cource_id in (
+    SELECT id from course where teacher_id = (
+     SELECT teacher_id from teacher where `name` ='张三'
+    )) GROUP BY student_id
+
+
+-- 查询学生表，排除 上述结果集的学生id ,即为没有学过张三老师讲授的任意一门课的学生
+
+    SELECT * from student where id not in (
+		SELECT student_id from score where cource_id in (
+			SELECT id from course where teacher_id = (
+				SELECT teacher_id from teacher where `name` ='张三'
+			)) GROUP BY student_id);
+-- 13、查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
+-- 庖丁解牛 : 考察 
+-- group by  分组
+-- having    分组之后再进行条件筛选
+
+--  在 12 题的基础上加上 having 筛选条件，条件为01 同学的选课总数
+	
+	SELECT s.* from student s where id in (
+		SELECT student_id from score where cource_id in (
+		SELECT cource_id from score where student_id = '01') and student_id <> '01' GROUP BY student_id HAVING count(*) = (SELECT count(*) from score where student_id = '01'));
+
+-- 12、查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息
+-- 庖丁解牛: 查看 in 关键字的使用
+-- 查询 01 学号的同学选了哪些课,得到课程id
+    
+    SELECT cource_id from score where student_id = '01'
+
+-- 查询哪些同学也选了 01 同学选的课,得出学生id
+    
+    SELECT student_id from score where cource_id in (
+	    SELECT cource_id from score where student_id = '01') and student_id <> '01' GROUP BY student_id
+
+-- 从学生表中查出哪些学生在上一步查出的学生id结果集里
+	
+	SELECT s.* from student s where id in (
+		SELECT student_id from score where cource_id in (
+		SELECT cource_id from score where student_id = '01') and student_id <> '01' GROUP BY student_id)
+-- 11、查询没有学全所有课程的同学的信息
+-- 庖丁解牛：
+-- 总共有几门课
+    
+    SELECT count(id) as courceTotalNum from course;
+-- 分组统计出每个学生选了几门课
+    
+    SELECT student_id from score  GROUP BY student_id;
+-- 将课程总数作为筛选条件，查询出选了所有课程的学生信息
+    
+    SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) = (SELECT COUNT(*) FROM course);
+-- 从学生表中排除选了所有课程的学生即为没有选择所有学生的信息
+   
+    SELECT s.* from student s 
+    where id not in (SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) = (SELECT COUNT(*) FROM course));
+
+
+
 -- 10、查询学过「张三」老师授课的同学的信息
-
 -- 庖丁解牛：有多种处理方法
-
 -- 方法1：
 -- 查询出张三老师的教师id
 
@@ -252,42 +334,6 @@
 					(SELECT student_id,score FROM score where cource_id = '02')sc2
 					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
 		)t on s.id = t.student_id
-11、查询没有学全所有课程的同学的信息
-
-    SELECT s.* FROM student s WHERE s.id NOT IN
-        (SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) = (SELECT COUNT(*) FROM course));
-     
-12、查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息
-
-    SELECT DISTINCT s.* FROM student s INNER JOIN
-     (SELECT s2.student_id student_id FROM score s2 WHERE s2.student_id <> '01' AND s2.cource_id IN
-     (SELECT s1.cource_id FROM score s1 WHERE s1.student_id = '01')) s3
-     ON s3.student_id = s.id;
-     
-    SELECT student.* FROM student WHERE id IN
-     (SELECT student_id FROM score sc WHERE sc.cource_id IN
-     (SELECT cource_id FROM score sc1 WHERE sc1.student_id = '01')) AND id <> '01';
-13、查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
-
-    SELECT s.* FROM student s INNER JOIN
-     (SELECT student_id id, COUNT(*) FROM score sc WHERE sc.cource_id IN
-      (SELECT cource_id FROM score WHERE student_id = '01') AND
-      sc.student_id <> '01' GROUP By sc.student_id HAVING
-      COUNT(*) = (SELECT COUNT(*) FROM score WHERE student_id = '01')) sd
-      ON sd.id = s.id;
- 
-14、查询没学过"张三"老师讲授的任一门课程的学生姓名
-
-    SELECT student.* FROM student WHERE id NOT IN
-     (SELECT student_id FROM score WHERE cource_id IN
-      (SELECT c.id FROM course c WHERE c.teacher_id = (SELECT t.id FROM teacher t WHERE t.name = '张三')));
-
-15、查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
-
-    SELECT s.id, s.name, avg_score FROM student s INNER JOIN
-     (SELECT student_id, AVG(score) avg_score, COUNT(*) FROM score
-      WHERE score < 60 GROUP BY student_id HAVING COUNT(*) >= 2) a
-     ON a. student_id = s.id;
 
  
 16、检索" 01 "课程分数小于 60，按分数降序排列的学生信息
