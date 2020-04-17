@@ -1,4 +1,6 @@
 # SQL 经典练习
+
+## MYSQL 版本 ：8.0.12
 ## 数据准备 
     --  创建 学生、课程、教师、分数 四张表，并录入初始数据
     
@@ -69,7 +71,165 @@
 ## 经典查询练习
 
 
+-- 18、查询各科成绩最高分、最低分和平均分：
+-- 以如下形式显示：课程 ID，课程 name，最高分，最低分，平均分，及格率，中等率，优良率，优秀率
+-- 及格为>=60，中等为：70-80，优良为：80-90，优秀为：>=90
+-- 要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
+-- 选择性聚合
 
+
+-- 庖丁解牛：max,min,avg,GROUP BY
+-- 1、课程号，最高分、最低分、平均分,选课数
+
+    SELECT
+        c.`name`,
+        sc.* 
+    FROM
+        course c,
+        (
+        SELECT
+            cource_id,
+            max( score ) max_score,
+            min( score ) min_score,
+            avg( score ) avg_socre,
+            count(*) s_count 
+        FROM
+            score 
+        GROUP BY
+            cource_id 
+        ) sc 
+    WHERE
+        c.id = sc.cource_id
+ 
+ -- 及格率 = 及格人数/总人数
+ -- 这里使用一个思想，满足>=60 则为1，否则为0，再用SUM进行求和就是 及格的总人数
+    
+    SELECT  CONCAT(SUM(CASE WHEN score >= 60 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') pass_rate from score;
+ 
+ -- 同理 中等率，优良率，优秀率 可得出，综合起来
+ 
+    SELECT  CONCAT(SUM(CASE WHEN score >= 60 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') pass_rate,
+     CONCAT(SUM(CASE WHEN score >= 70 AND score < 80 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') mid_rate,
+     CONCAT(SUM(CASE WHEN score >= 80 AND score < 90 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') good_rate,
+     CONCAT(SUM(CASE WHEN score >= 90 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') excellent_rate 
+		 from score 
+		 
+		 
+-- 将这个结合到步骤1查出的结果中，得到未进行排序的SQL
+	
+    SELECT
+        cource_id c_id,
+        course.NAME NAME,
+        COUNT(*) s_count,
+        MAX( score ) max_score,
+        MIN( score ) min_score,
+        AVG( score ) avg_score,
+        CONCAT( SUM( CASE WHEN score >= 60 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) pass_rate,
+        CONCAT( SUM( CASE WHEN score >= 70 AND score < 80 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) mid_rate,
+        CONCAT( SUM( CASE WHEN score >= 80 AND score < 90 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) good_rate,
+        CONCAT( SUM( CASE WHEN score >= 90 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) excellent_rate 
+    FROM
+        score,
+        course 
+    WHERE
+        course.id = score.cource_id 
+    GROUP BY
+        cource_id
+-- 再按照选课人数、课程id升序排
+	 
+    SELECT
+        cource_id c_id,
+        course.NAME NAME,
+        COUNT(*) s_count,
+        MAX( score ) max_score,
+        MIN( score ) min_score,
+        AVG( score ) avg_score,
+        CONCAT( SUM( CASE WHEN score >= 60 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) pass_rate,
+        CONCAT( SUM( CASE WHEN score >= 70 AND score < 80 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) mid_rate,
+        CONCAT( SUM( CASE WHEN score >= 80 AND score < 90 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) good_rate,
+        CONCAT( SUM( CASE WHEN score >= 90 THEN 1 ELSE 0 END ) / COUNT(*) * 100, '%' ) excellent_rate 
+    FROM
+        score,
+        course 
+    WHERE
+        course.id = score.cource_id 
+    GROUP BY
+        cource_id 
+    ORDER BY
+        s_count DESC,
+        c_id ASC;
+-- 17、按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
+-- 庖丁解牛 :GROUP BY ,avg ,ORDER BY 
+
+-- 分数表中所有同学的平均成绩
+
+    SELECT student_id,avg(score) avg_score,cource_id from score GROUP BY student_id 
+
+-- 分数表中所有同学的成绩
+    
+    SELECT sc.* from score sc
+
+
+-- 两个结果集关联起来并按照平均成绩降序排
+	
+	SELECT
+		sc.*,
+		t.avg_score 
+	FROM
+		score sc
+		LEFT JOIN ( SELECT student_id, avg( score ) avg_score, cource_id FROM score GROUP BY student_id ) t ON sc.student_id = t.student_id 
+	ORDER BY
+		t.avg_score DESC
+		
+ -- 所有学生的
+		
+		SELECT
+			s.id,
+			t2.* 
+		FROM
+			student s
+			LEFT JOIN (
+			SELECT
+				sc.*,
+				t.avg_score 
+			FROM
+				score sc
+				LEFT JOIN ( SELECT student_id, avg( score ) avg_score, cource_id FROM score GROUP BY student_id ) t ON sc.student_id = t.student_id 
+			ORDER BY
+				t.avg_score DESC 
+			) t2 ON s.id = t2.student_id
+	
+
+-- 16、 检索" 01 "课程分数小于 60，按分数降序排列的学生信息
+
+-- 庖丁解牛 : 考察 order by ，默认是asc (升序),desc 为降序排
+-- 01 课程小于 60 分的学生id 
+
+    SELECT student_id from score where cource_id = '01' and score < 60 
+--  关联student 查出  学生信息
+
+    SELECT * from student s
+    INNER JOIN (
+        SELECT student_id,score from score where cource_id = '01' and score < 60 
+    )sc
+    on s.id = sc.student_id
+
+-- 按分数降序排列
+
+    SELECT * from student s
+    INNER JOIN (
+        SELECT student_id,score from score where cource_id = '01' and score < 60 
+    )sc
+    on s.id = sc.student_id
+    ORDER BY score desc
+
+
+
+-- 或者 ：能够使用 inner join 的，一定能够改为两个结果集逗号连接查询
+
+    SELECT s.*,sc.score from student s ,(SELECT student_id,score from score where cource_id = '01' and score < 60 ) sc
+    
+    where s.id = sc.student_id order by score desc
 -- 15、查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
 
 -- 庖丁解牛： where 、having 的联合使用
@@ -335,36 +495,7 @@
 					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
 		)t on s.id = t.student_id
 
- 
-16、检索" 01 "课程分数小于 60，按分数降序排列的学生信息
 
-    SELECT s.* FROM student s INNER JOIN
-     (SELECT * FROM score WHERE cource_id = '01' AND score < 60) sc ON
-     sc.student_id = s.id ORDER BY sc.score DESC;
-
-    SELECT s.*, sc.* FROM student s, (SELECT * FROM score WHERE cource_id = '01' AND score < 60) sc  WHERE s.id = sc.student_id ORDER BY sc.score DESC;
- 
-17、按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
-
-    SELECT s.*, sc.score, sc.avg_score FROM student s LEFT JOIN
-     (SELECT student_id student_id, score score, AVG(score) avg_score FROM score GROUP BY student_id) sc
-     ON sc.student_id = s.id ORDER BY sc.avg_score DESC;
-
-18、查询各科成绩最高分、最低分和平均分：
-
-    – 以如下形式显示：课程 ID，课程 name，最高分，最低分，平均分，及格率，中等率，优良率，优秀率
-    – 及格为>=60，中等为：70-80，优良为：80-90，优秀为：>=90
-    – 要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
-    -- 选择性聚合
-    
-    SELECT cource_id c_id, course.name name, COUNT(*) s_count, MAX(score) max_score,
-     MIN(score) min_score, AVG(score) avg_score,
-     CONCAT(SUM(CASE WHEN score >= 60 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') pass_rate,
-     CONCAT(SUM(CASE WHEN score >= 70 AND score < 80 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') mid_rate,
-     CONCAT(SUM(CASE WHEN score >= 80 AND score < 90 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') good_rate,
-     CONCAT(SUM(CASE WHEN score >= 90 THEN 1 ELSE 0 END) / COUNT(*) * 100, '%') excellent_rate
-     FROM score, course WHERE course.id = score.cource_id GROUP BY cource_id
-     ORDER BY s_count DESC, c_id ASC;
 
  
 19、按各科成绩进行排序，并显示排名， Score 重复时保留名次空缺
