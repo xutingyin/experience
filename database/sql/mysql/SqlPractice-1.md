@@ -71,6 +71,171 @@
 ## 经典查询练习
 
 
+
+-- 22、 查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
+-- 庖丁解牛：总分重复时不保留名次空缺，即两个第一名，下一个为第二名
+
+-- MySQL 8中实现
+
+    SELECT
+        student_id,
+        SUM( score ) sum_score,
+        DENSE_RANK() over ( ORDER BY sum( score ) DESC ) AS ranking 
+    FROM
+        score 
+    GROUP BY
+        student_id
+	
+-- MySQL 8 之前版本实现
+
+-- @实现 rownum 
+-- := 除了在 set、update 等DDL中和 = 是一样的作用外，还能在select 中实现赋值操作
+-- 第一步：总分倒叙排
+
+    SELECT
+        student_id,
+        SUM( score ) total 
+    FROM
+        score 
+    GROUP BY
+        student_id 
+    ORDER BY
+        sum_score DESC
+
+-- 第二步：排序初始值
+    
+    select @pre_total:=NULL,@current_rank:=0,@rank_counter:=0 
+
+-- 第三步：增加 排序逻辑 ：如果@pre_total = total,则当前的排序为@current_rank，否则则为@current_rank +1
+    
+    IF(@pre_total = t.total, @current_rank, @current_rank := @current_rank + 1 ) AS ranking
+
+-- 第四步，综合上述三步，得出最终SQL
+	
+	SELECT
+		t.student_id,
+		t.total,
+	IF
+		( @pre_total = t.total, @current_rank, @current_rank := @current_rank + 1 ) AS ranking,
+		-- @pre_total := t.total temp1 这里需要一个临时值来存储每一次遍历的总分数
+		@pre_total := t.total temp1 
+	FROM
+		( SELECT student_id, SUM( score ) total FROM score GROUP BY student_id ORDER BY total DESC ) t,(
+		SELECT
+			@pre_total := NULL,
+			@current_rank := 0 
+		) r 
+ 
+
+-- 第五步 ：获取需要的字段
+ 
+     SELECT
+        t2.student_id,
+        t2.total,
+        t2.ranking 
+    FROM
+        (
+        SELECT
+            t.student_id,
+            t.total,
+        IF
+            ( @pre_total = t.total, @current_rank, @current_rank := @current_rank + 1 ) AS ranking,
+            @pre_total := t.total temp1 
+        FROM
+            ( SELECT student_id, SUM( score ) total FROM score GROUP BY student_id ORDER BY total DESC ) t,(
+            SELECT
+                @pre_total := NULL,
+                @current_rank := 0 
+            ) r 
+        ) t2
+-- 21 查询学生的总成绩，并进行排名，总分重复时保留名次空缺
+-- 庖丁解牛：总分重复时保留名次空缺，即总分数相同时，若有两个第一名，则下一个为第三名
+-- MYSQL 8 实现
+
+    SELECT
+        student_id,
+        sum( score ) total_score,
+        RANK() over ( ORDER BY SUM( score ) DESC ) AS sum_rank 
+    FROM
+        score 
+    GROUP BY
+        student_id;
+	
+--  MySQL 8之前版本实现
+
+	SELECT
+		t1.student_id,
+		t1.total,
+		t1.ranking 
+	FROM
+		(
+		SELECT
+			t.student_id,
+			t.total,
+		IF
+			( @pre_total = t.total, @cur_rank, @cur_rank := @rank_counter ) ranking,
+			@pre_total := t.total temp1,
+			@rank_counter := @rank_counter + 1 temp2 
+		FROM
+			( SELECT student_id, SUM( score ) total FROM score GROUP BY student_id ORDER BY total DESC ) t,
+		  ( SELECT @pre_total := NULL, @cur_rank := 0, @rank_counter := 1 ) r 
+		) t1
+
+
+
+-- 20、按各科成绩进行排序，并显示排名,score 重复时合并名次
+-- 庖丁解牛：,score 重复时合并名次的意思是，如果有两个第一名，则下一个是第二名
+
+    SELECT cource_id,score,DENSE_RANK() over(PARTITION by cource_id ORDER BY score desc) ranking from score ;
+
+-- 下列写法等价
+    
+    SELECT
+        cource_id,
+        score,
+        DENSE_RANK() over w AS ranking 
+    FROM
+        score window w AS (
+            PARTITION BY cource_id 
+    ORDER BY
+        score DESC)
+-- 19、按各科成绩进行排序，并显示排名， score 重复时保留名次空缺
+-- 庖丁解牛：score 重复时保留名次空缺的含义是：如果有两个第一名，那么下一个就是第三名，没有第二名
+
+	SELECT cource_id, score, 
+	RANK() OVER w as rank1 
+	 -- DENSE_RANK() OVER(PARTITION BY cource_id ORDER BY score DESC)  as rank2 ,
+     -- ROW_NUMBER() OVER(PARTITION BY cource_id ORDER BY score DESC)  as rank3 
+	FROM score
+    WINDOW w AS (PARTITION BY cource_id ORDER BY score DESC);
+-- MYSQL 8 之前的版本实现
+-- 使用 @ 来模拟生成自增id 实现 rownum
+
+    SELECT t.cource_id,t.score,t.ranking from
+        ( 
+        SELECT s.cource_id, s.score,
+        IF(@pre_course_id = s.cource_id,
+           @rank_counter := @rank_counter + 1,
+           @rank_counter := 1) temp1,
+        IF(@pre_course_id = s.cource_id,
+           IF(@pre_score = s.score, @cur_rank, @cur_rank := @rank_counter),
+           @cur_rank := 1) ranking,
+        @pre_score := s.score temp2,
+        @pre_course_id := s.cource_id temp3
+        FROM score s, (SELECT @cur_rank := 0, @pre_course_id := NULL, @pre_score := NULL, @rank_counter := 1)r
+        ORDER BY s.cource_id, s.score DESC)t
+	  
+-- 拓展开的知识点 :
+
+    -- RANK()       --Returns the rank of the current row within its partition, with gaps.
+    -- DENSE_RANK() --Returns the rank of the current row within its partition, without gaps. 
+    -- ROW_NUMBER() --Returns the number of the current row within its partition. Rows numbers range from 1 to the number of partition rows.
+    -- PARTITION BY
+    -- ORDER BY
+    -- IFNULL(expr1,expr2) : If expr1 is not NULL, IFNULL() returns expr1; otherwise it returns expr2.
+    -- @ 实现 rownum 自增id
+    -- SELECT @i:=@i+1 as rownnum  from score s,(SELECT @i:=0) as init;
+    -- window w  为MYSQl 8 中新增的窗口函数
 -- 18、查询各科成绩最高分、最低分和平均分：
 -- 以如下形式显示：课程 ID，课程 name，最高分，最低分，平均分，及格率，中等率，优良率，优秀率
 -- 及格为>=60，中等为：70-80，优良为：80-90，优秀为：>=90
@@ -496,79 +661,7 @@
 		)t on s.id = t.student_id
 
 
-
  
-19、按各科成绩进行排序，并显示排名， Score 重复时保留名次空缺
---- MYSQL 8.0 实现
-
-    SELECT cource_id, score, RANK() OVER(PARTITION BY cource_id ORDER BY score DESC) FROM score;
-     
-    SELECT s.cource_id, s.score,
-    IF(@pre_course_id = s.cource_id,
-       @rank_counter := @rank_counter + 1,
-       @rank_counter := 1) temp1,
-    IF(@pre_course_id = s.cource_id,
-       IF(@pre_score = s.score, @cur_rank, @cur_rank := @rank_counter),
-       @cur_rank := 1) ranking,
-    @pre_score := s.score temp2,
-    @pre_course_id := s.cource_id temp3
-    FROM score s, (SELECT @cur_rank := 0, @pre_course_id := NULL, @pre_score := NULL, @rank_counter := 1)r
-    ORDER BY s.cource_id, s.score DESC;
-
- 
-20、按各科成绩进行排序，并显示排名， Score 重复时合并名次
-
-    --- MYSQL 8.0 实现
-    SELECT cource_id, score, DENSE_RANK() OVER(PARTITION BY cource_id ORDER BY score DESC) FROM score;
-     
-    SELECT s.cource_id, s.score,
-    IF(@pre_score = s.score, @cur_rank, @cur_rank := @cur_rank + 1) temp1,
-    @pre_score := s.score,
-    IF(@pre_course_id = s.cource_id, @cur_rank, @cur_rank := 1) ranking,
-    @pre_course_id := s.cource_id
-    FROM score s, (SELECT @cur_rank :=0, @pre_score = NULL, @pre_course_id := NULL) r
-    ORDER BY cource_id, score DESC;
-
- 
-    SELECT s.cource_id, s.score,
-    IF(@pre_course_id = s.cource_id,
-       IF(@pre_score = s.score, @cur_rank, @cur_rank := @cur_rank + 1),
-       @cur_rank := 1) ranking,
-    @pre_score := s.score,
-    @pre_course_id := s.cource_id
-    FROM score s, (SELECT @cur_rank :=0, @pre_score = NULL, @pre_course_id := NULL) r
-    ORDER BY cource_id, score DESC;
-
- 
-21、查询学生的总成绩，并进行排名，总分重复时保留名次空缺
-
-    SELECT student_id, SUM(score) total, RANK() OVER(ORDER BY SUM(score) DESC) ranking
-    FROM score GROUP BY student_id;
-     
-    SELECT t.student_id, t.total,
-    IF(@pre_total = t.total, @cur_rank, @cur_rank := @rank_counter) ranking,
-    @pre_total := t.total temp1,
-    @rank_counter := @rank_counter + 1 temp2
-    FROM (SELECT student_id, SUM(score) total
-          FROM score GROUP BY student_id ORDER BY total DESC) t,
-          (SELECT @pre_total := NULL, @cur_rank := 0, @rank_counter := 1) r;
-
- 
-查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
-SELECT student_id, SUM(score) total, DENSE_RANK() OVER(ORDER BY SUM(score) DESC) ranking
-FROM score GROUP BY student_id;
-1
-2
-SELECT t.student_id, t.total,
-IF(@pre_total = t.total, @cur_rank, @cur_rank := @cur_rank + 1) ranking,
-@pre_total := t.total temp1
-FROM (SELECT student_id, SUM(score) total
-      FROM score GROUP BY student_id ORDER BY total DESC) t,
-      (SELECT @pre_total := NULL, @cur_rank := 0) r;
-
-4
-5
-6
 统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
 SELECT c.id, c.name,
 SUM(IF(sc.score >= 0 AND sc.score < 60, 1, 0)) / COUNT(*) '[0-60)',
