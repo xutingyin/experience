@@ -1,6 +1,7 @@
 # SQL 经典练习
 
 ## MYSQL 版本 ：8.0.12
+## 参考：https://dev.mysql.com/doc/refman/8.0/en
 ## 数据准备 
     --  创建 学生、课程、教师、分数 四张表，并录入初始数据
     
@@ -70,7 +71,127 @@
 
 ## 经典查询练习
 
+-- 30、查询 1990 年出生的学生名单
+-- 庖丁解牛：这里可以使用YEAR() 和 DATE_FORMAT(date,format) 两种方式
 
+    SELECT * from student where YEAR(age) = '1990';
+    SELECT * from student where DATE_FORMAT(age,'%Y') = '1990';
+-- 29、查询同名同性别学生名单，并统计同名人数
+-- 庖丁解牛: inner join 、同一张表进行关联
+
+    SELECT
+        s1.NAME,
+        count(*) total 
+    FROM
+        student s1
+        INNER JOIN student s2 ON s1.NAME = s2.NAME 
+        AND s1.id <> s2.id 
+    GROUP BY
+        s1.NAME
+-- 能够使用 inner join 的地方，一定能够使用逗号互换
+    
+    SELECT
+        s1.NAME,
+        COUNT(*) total
+    FROM
+        student s1,
+        student s2 
+    WHERE
+        s1.NAME = s2.NAME 
+        AND s1.id <> s2.id 
+    GROUP BY
+        NAME;
+-- 方法2：name 分组统计	
+
+    SELECT name, COUNT(*) total FROM student GROUP BY name HAVING total >1;
+
+-- 28、查询名字中含有「风」字的学生信息
+-- 庖丁解牛 ：like 模糊匹配的使用
+-- % matches one % character.
+-- _ matches one _ character.
+    
+    SELECT * from student where name like '%风%'
+
+-- 27、查询男生、女生人数
+-- 庖丁解牛：count()、group by 的使用
+-- 方法1：根据sex 进行分组统计
+    
+    SELECT sex,count(*) sex_total from student GROUP BY sex
+ 
+
+-- 26、查询出只选修两门课程的学生学号和姓名
+-- 庖丁解牛
+-- INNER JOIN 、count 、group by 、having 的用法
+-- 分组查询出只选了两门课的学生id
+    
+    SELECT student_id, count(*) total FROM score sc GROUP BY student_id HAVING total = 2
+
+-- 关联学生表得出学生姓名
+  
+    SELECT
+        s.id,
+        s.NAME,
+        sc.total 
+    FROM
+        student s
+        INNER JOIN ( SELECT student_id, count(*) total FROM score sc GROUP BY student_id HAVING total = 2 ) sc ON s.id = sc.student_id
+
+-- 25、查询每门课程被选修的学生数
+-- 庖丁解牛： count()、 group by 的用法
+    
+    SELECT cource_id, count(*) total FROM score GROUP BY cource_id
+
+
+-- 24、查询各科成绩前三名的记录
+-- 庖丁解牛：
+-- 子查询
+   
+    SELECT sc1.cource_id, sc1.student_id, sc1.score
+    FROM score sc1
+    WHERE (SELECT COUNT(*) FROM score sc2 WHERE sc1.cource_id = sc2.cource_id AND sc1.score < sc2.score) < 3
+    ORDER BY sc1.cource_id, sc1.score DESC;
+-- MYSQL 8 实现
+ 
+    SELECT * from (
+    SELECT  sc.cource_id, sc.student_id, sc.score,
+    ROW_NUMBER() over(PARTITION by sc.cource_id ORDER BY score desc)  ranking
+    from score  sc)as A
+    where A.ranking  < 4;
+
+ 
+
+-- 23、统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
+-- 庖丁解牛：SUM()、IF()、COUNT
+-- 各分数段人数
+-- [0-60]
+    
+    SELECT SUM(IF(sc.score >= 0 AND sc.score < 60,1,0)) '[0-60)' from score sc;
+-- 同理可得 [60-70)、[70-85),[85-100)
+    
+    SELECT SUM(IF(sc.score >= 60 AND sc.score < 70,1,0)) '[60-70)' from score sc;;
+    SELECT SUM(IF(sc.score >= 70 AND sc.score < 85,1,0)) '[70-85)' from score sc;
+    SELECT SUM(IF(sc.score >= 85 AND sc.score <= 100,1,0)) '[85-100]' from score sc;
+
+-- 各分数断占百分比
+    
+    SELECT 
+        SUM(IF(sc.score >= 0 AND sc.score < 60,1,0))/count(*)   '[0-60)',
+        SUM(IF(sc.score >= 60 AND sc.score < 70,1,0))/count(*) '[60-70)',
+        SUM(IF(sc.score >= 70 AND sc.score < 85,1,0))/count(*)  '[70-85)',
+      SUM(IF(sc.score >= 85 AND sc.score <= 100,1,0))/count(*) '[85-100]'
+    from score sc
+-- 再联合课程表查出其字段
+
+    SELECT 
+        sc.cource_id,
+        c.name,
+        SUM(IF(sc.score >= 0 AND sc.score < 60,1,0))/count(*)   '[0-60)',
+        SUM(IF(sc.score >= 60 AND sc.score < 70,1,0))/count(*) '[60-70)',
+        SUM(IF(sc.score >= 70 AND sc.score < 85,1,0))/count(*)  '[70-85)',
+      SUM(IF(sc.score >= 85 AND sc.score <= 100,1,0))/count(*) '[85-100]'
+    from score sc,course c
+    where sc.cource_id = c.id
+    GROUP BY sc.cource_id;
 
 -- 22、 查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
 -- 庖丁解牛：总分重复时不保留名次空缺，即两个第一名，下一个为第二名
@@ -661,57 +782,7 @@
 		)t on s.id = t.student_id
 
 
- 
-统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
-SELECT c.id, c.name,
-SUM(IF(sc.score >= 0 AND sc.score < 60, 1, 0)) / COUNT(*) '[0-60)',
-SUM(IF(sc.score >= 60 AND sc.score < 70, 1, 0)) / COUNT(*) '[60-70)',
-SUM(IF(sc.score >= 70 AND sc.score < 85, 1, 0)) / COUNT(*) '[70-85)',
-SUM(IF(sc.score >= 85 AND sc.score <= 100, 1, 0)) / COUNT(*) '[80-100]'
-FROM course c LEFT JOIN score sc ON c.id = sc.cource_id
-GROUP BY sc.cource_id;
 
-4
-5
-6
-7
-查询各科成绩前三名的记录
---关联子查询
-SELECT sc1.cource_id, sc1.student_id, sc1.score
-FROM score sc1
-WHERE (SELECT COUNT(*) FROM score sc2 WHERE sc1.cource_id = sc2.cource_id AND sc1.score < sc2.score) < 3
-ORDER BY sc1.cource_id, sc1.score DESC;
-
-4
-5
-查询每门课程被选修的学生数
-SELECT cource_id, COUNT(*) FROM score GROUP BY cource_id;
-1
-查询出只选修两门课程的学生学号和姓名
-SELECT s.* FROM student s INNER JOIN
- (SELECT student_id, COUNT(*) s_count FROM score GROUP BY student_id HAVING COUNT(*) = 2) sc
- ON sc.student_id = s.id;
-
-查询男生、女生人数
-SELECT sex, COUNT(*) FROM student GROUP BY sex;
-1
-查询名字中含有「风」字的学生信息
-SELECT student.* FROM student WHERE name Like '%风%';
-1
-查询同名同性学生名单，并统计同名人数
-SELECT s1.name, COUNT(*) FROM student s1, student s2 WHERE
- s1.name = s2.name AND s1.id <> s2.id GROUP By name;
-1
-2
-SELECT s1.name, COUNT(*) FROM student s1
- INNER JOIN student s2 ON s1.name = s2.name AND s1.id <> s2.id
- ORDER BY name;
-
-SELECT name, COUNT(*) FROM student GROUP BY name HAVING COUNT(*) >1;
-1
-查询 1990 年出生的学生名单
-SELECT * FROM student WHERE YEAR(age) = 1990;
-1
 查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
 SELECT cource_id, AVG(score) avg_score
 FROM score GROUP BY cource_id
