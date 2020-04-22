@@ -71,6 +71,68 @@
 
 ## 经典查询练习
 
+-- 35、查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
+-- 庖丁解牛：INNER JOIN 两个结果集都有的数据
+ 
+    SELECT
+        s.NAME,
+        c.NAME,
+        sc.score 
+    FROM
+        score sc
+        INNER JOIN course c ON c.id = sc.cource_id
+        INNER JOIN student s ON s.id = sc.student_id 
+     WHERE
+        sc.score >= 70
+-- 34、查询所有学生的课程及分数情况（存在学生没成绩，没选课的情况）
+-- 庖丁解牛：LEFT JOIN -- 以左表为主，右表没有的用null填充
+    
+    SELECT
+        s.id,
+        sc.cource_id,
+        sc.score 
+    FROM
+        student s
+        LEFT JOIN score sc ON s.id = sc.student_id
+-- 33、查询课程名称为「数学」，且分数低于 60 的学生姓名和分数
+-- 庖丁解牛：INNER JOIN、子查询
+  
+    SELECT
+        s.`name`,
+        sc.score 
+    FROM
+        student s
+        INNER JOIN ( SELECT student_id, score FROM score WHERE cource_id =( SELECT id FROM course WHERE `name` = '数学' ) AND score < 60 ) sc ON s.id = sc.student_id
+
+
+
+-- 32、查询平均成绩大于等于 85 的所有学生的学号、姓名和平均成绩
+-- 庖丁解牛： AVG()、 HAVING 、 INNER JOIN、GROUP BY
+    
+    SELECT
+        s.id,
+        s.NAME,
+        AVG( score ) AS avg_score 
+    FROM
+        score sc
+        INNER JOIN student s ON s.id = sc.student_id 
+    GROUP BY
+        student_id 
+    HAVING
+        avg_score >= 85
+-- 31、查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
+-- 庖丁解牛：avg()、GROUP BY、order ORDER BY
+  
+    SELECT
+        cource_id,
+        avg( score ) avg_score 
+    FROM
+        score 
+    GROUP BY
+        score 
+    ORDER BY
+        avg_score DESC,
+        cource_id
 -- 30、查询 1990 年出生的学生名单
 -- 庖丁解牛：这里可以使用YEAR() 和 DATE_FORMAT(date,format) 两种方式
 
@@ -782,34 +844,6 @@
 		)t on s.id = t.student_id
 
 
-
-查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
-SELECT cource_id, AVG(score) avg_score
-FROM score GROUP BY cource_id
-ORDER BY avg_score DESC, cource_id;
-
-查询平均成绩大于等于 85 的所有学生的学号、姓名和平均成绩
-SELECT s.id, s.name, AVG(sc.score) avg_score
-FROM student s INNER JOIN score sc ON s.id = sc.student_id
-GROUP BY sc.student_id HAVING avg_score >=85;
-
-查询课程名称为「数学」，且分数低于 60 的学生姓名和分数
-SELECT s.name, sc.score FROM student s
-LEFT JOIN score sc ON s.id = sc.student_id
-WHERE sc.cource_id = (SELECT id FROM course WHERE name = '数学') AND sc.score < 60;
-
-查询所有学生的课程及分数情况（存在学生没成绩，没选课的情况）
-SELECT s.id, s.name, sc.cource_id, sc.score FROM student s
-LEFT JOIN score sc ON s.id = sc.student_id;
-1
-2
-查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
-SELECT s.name, c.name, sc.score
-FROM score sc INNER JOIN student s ON s.id = sc.student_id
-INNER JOIN course c ON c.id = sc.cource_id
-WHERE sc.score >= 70;
-
-4
 查询不及格的课程
 SELECT * FROM score WHERE score < 60;
 1
