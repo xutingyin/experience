@@ -71,6 +71,102 @@
 
 ## 经典查询练习
 
+
+
+-- 40、成绩有重复的情况下，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+-- 庖丁解牛： 得出选张三老师课的最高分，再根据最高分查出学生
+-- 张三老师教授的课程id
+    
+    SELECT id from course where teacher_id = (
+        SELECT id from teacher where name ='张三')
+
+-- 查询这门课的最高分
+
+    SELECT MAX(score) max_score from score where cource_id =(
+    SELECT id from course where teacher_id = (
+        SELECT id from teacher where name ='张三')
+    )
+-- 关联出 这个分数的学生信息
+
+    SELECT s.*,sc.score from student s,score sc,teacher t,course c
+    where s.id =sc.student_id 
+    and sc.cource_id = c.id 
+    and t.id = c.teacher_id
+    and t.`name` = '张三' and sc.score = (
+        SELECT MAX(score) max_score from score where cource_id =(
+        SELECT id from course where teacher_id = (
+            SELECT id from teacher where name ='张三')
+        )
+    )
+-- 39、成绩不重复，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+--  庖丁解牛: order by desc 成绩，取第一条
+-- 张三老师教授的课程id
+
+    SELECT id from course where teacher_id = (
+        SELECT id from teacher where name ='张三')
+-- 哪些学生选了这个课程id
+    
+    SELECT s.*,sc.score from student s
+        INNER JOIN(
+        SELECT student_id,score from score where cource_id in(
+        SELECT id from course where teacher_id = (
+        SELECT id from teacher where name ='张三')
+        )) sc on s.id = sc.student_id
+-- 成绩倒叙排序，取第一条	
+ 
+    SELECT s.*,sc.score from student s
+        INNER JOIN(
+        SELECT student_id,score from score where cource_id in(
+        SELECT id from course where teacher_id = (
+        SELECT id from teacher where name ='张三')
+        )) sc on s.id = sc.student_id
+    ORDER BY sc.score desc LIMIT 1
+-- 能用 INNER JOIN 的地方就能使用英文逗号连接
+   
+    SELECT
+        s.*,
+        sc.score 
+    FROM
+        score sc,
+        student s,
+        teacher t,
+        course c 
+    WHERE
+        sc.cource_id = c.id 
+        AND s.id = sc.student_id 
+        AND c.teacher_id = t.id 
+        AND t.NAME = '张三' 
+    ORDER BY
+        sc.score DESC 
+        LIMIT 1
+-- 38、求每门课程的学生人数
+-- 庖丁解牛：GROUP BY 、count()
+    
+    SELECT cource_id,count(*) total from score GROUP BY cource_id
+
+-- 37、查询课程编号为 01 且课程成绩在 80 分以上的学生的学号和姓名
+-- 庖丁解牛： LEFT JOIN 或者 in
+-- 01 课程在80分以上的学号
+  
+    SELECT
+        s.id,
+        s.NAME 
+    FROM
+        student s INNER JOIN score sc
+        ON s.id = sc.student_id 
+        where  sc.cource_id = '01' and sc.score >=80 
+    
+    SELECT
+        s.id,
+        s.NAME 
+    FROM
+        student s 
+    WHERE
+        id IN ( SELECT student_id FROM score WHERE cource_id = '01' AND score >= 80 )
+-- 36、查询不及格的课程
+-- 庖丁解牛：where 筛选
+
+    SELECT * from score where score < 60
 -- 35、查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
 -- 庖丁解牛：INNER JOIN 两个结果集都有的数据
  
@@ -843,50 +939,6 @@
 					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
 		)t on s.id = t.student_id
 
-
-查询不及格的课程
-SELECT * FROM score WHERE score < 60;
-1
-查询课程编号为 01 且课程成绩在 80 分以上的学生的学号和姓名
-SELECT s.id, s.name, sc.score FROM score sc
-INNER JOIN student s ON sc.student_id = s.id
-WHERE sc.score >= 80 AND sc.cource_id = '01';
-
-求每门课程的学生人数
-SELECT cource_id, COUNT(*) num FROM score
-GROUP BY(cource_id);
-1
-2
-成绩不重复，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
-SELECT s.id, s.name, sc.score FROM score sc
-INNER JOIN student s ON sc.student_id = s.id
-WHERE sc.cource_id = (SELECT id FROM course WHERE teacher_id =
-      (SELECT id FROM teacher WHERE name = '张三'))
-ORDER BY sc.score DESC LIMIT 1;
-
-4
-5
-SELECT s.id, s.name, sc.score FROM score sc, student s, teacher t, course c
-WHERE sc.student_id = s.id AND sc.cource_id = c.id AND
-      c.teacher_id = t.id AND t.name = '张三'
-ORDER BY sc.score DESC LIMIT 1;
-
-4
-成绩有重复的情况下，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
-SELECT s.id, s.name, sc.score FROM score sc, student s, teacher t, course c
-WHERE sc.student_id = s.id AND sc.cource_id = c.id AND
-      c.teacher_id = t.id AND t.name = '张三' AND
-      sc.score = (SELECT MAX(ss.score)
-                  FROM (SELECT sc.score
-                        FROM score sc, student s, teacher t, course c
-                        WHERE sc.student_id = s.id AND sc.cource_id = c.id AND
-                  c.teacher_id = t.id AND t.name = '张三') ss);
-
-4
-5
-6
-7
-8
 查询不同课程成绩相同的学生的学生编号、课程编号、学生成绩
 SELECT sc1.student_id, sc1.cource_id, sc1.score FROM score sc1
 INNER JOIN score sc2 ON sc1.student_id = sc2.student_id
