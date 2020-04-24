@@ -73,7 +73,115 @@
 
 
 
--- 40、成绩有重复的情况下，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+-- 50、查询下月过生日的学生
+-- 庖丁解牛:
+    SELECT * from student where  MONTH(age)  = MONTH(DATE_ADD(CURRENT_DATE(),INTERVAL 1 MONTH)) 
+-- 49、查询本月过生日的学生
+-- 庖丁解牛：MONTH 函数的使用
+
+    SELECT * from student where  MONTH(age)  = MONTH(CURRENT_DATE()) 
+-- 48、查询下周过生日的学生
+-- 庖丁解牛：DATE_ADD 函数的使用
+
+    SELECT * from student where  WEEKOFYEAR(age)  = WEEKOFYEAR(DATE_ADD(CURRENT_DATE(),INTERVAL 7 DAY)) 
+-- 47、查询本周过生日的学生
+-- 庖丁解牛： WEEKOFYEAR() 函数的使用，返回一年中是第几周
+
+    SELECT * from student where WEEKOFYEAR(age)  =  WEEKOFYEAR(CURRENT_DATE())
+-- 46、按照出生日期来算，当前月日 < 出生年月的月日则，年龄减一
+-- 庖丁解牛：两种方法： TIMESTAMPDIFF 函数的使用
+   
+     SELECT name, YEAR(NOW()) - YEAR(age) age ,
+     IF(MONTH(NOW()) < MONTH(age),YEAR(NOW()) - YEAR(age) - 1,YEAR(NOW()) - YEAR(age) ) sub_age
+     FROM student ;
+-- 或者
+
+    SELECT name, YEAR(NOW()) - YEAR(age) age, TIMESTAMPDIFF(YEAR, age, CURDATE()) sub_age FROM student;
+-- 45、查询各学生的年龄，只按年份来算
+-- 庖丁解牛： YEAR(date) 函数的使用
+    
+    SELECT id,`name`,(YEAR(NOW()) - YEAR(age)) as age from student ;
+-- 44、查询选修了全部课程的学生信息
+-- 庖丁解牛：子查询、GROUP BY、count() 、HAVING 
+    
+    SELECT
+        student_id 
+    FROM
+        score 
+    GROUP BY
+        student_id 
+    HAVING
+        count(*) = ( SELECT count(*) FROM course )
+-- 43、检索至少选修两门课程的学生学号
+-- 庖丁解牛 ：count 、group by having  
+
+    SELECT
+        student_id 
+    FROM
+        score 
+    GROUP BY
+        student_id 
+    HAVING
+        count(*) >=2
+-- 42、统计每门课程的学生选修人数（超过 5 人的课程才统计）
+-- 庖丁解牛：count()  GROUP BY 、having 的的使用
+
+    select cource_id,count(*) total from score
+    GROUP BY cource_id
+    HAVING count(student_id) > 5
+-- 41、查询每门功成绩最好的前两名
+-- 庖丁解牛：两种方法，同一张表自连接 和使用 ROW_NUMBER()函数进行组内排序
+
+    SELECT sc1.student_id, sc1.cource_id, sc1.score FROM score sc1
+    WHERE (SELECT COUNT(*) FROM score sc2
+           WHERE sc1.cource_id = sc2.cource_id
+           AND sc1.score <= sc2.score) <= 2
+    ORDER BY cource_id;
+    
+    
+    -- MYSQL8 实现
+    SELECT * from (
+                SELECT student_id,cource_id,score,
+                ROW_NUMBER() over(PARTITION by cource_id ORDER BY score desc) ranking
+                from score 
+                GROUP BY cource_id,student_id)t
+    where t.ranking < 3
+-- 40、查询不同课程成绩相同的学生的学生编号、课程编号、学生成绩
+-- 庖丁解牛：同一张表进行联合查询 、DISTINCT 去重
+
+	SELECT DISTINCT
+		sc1.student_id,
+		sc1.cource_id,
+		sc1.score 
+	FROM
+		score sc1,
+		score sc2 
+	WHERE
+		sc1.score = sc2.score 
+		AND sc1.student_id <> sc2.student_id 
+	ORDER BY
+		score DESC;
+
+-- 能够使用英文逗号连接的肯定能够使用 INNER JOIN
+ 
+    SELECT
+        sc1.student_id,
+        sc1.cource_id,
+        sc1.score 
+    FROM
+        score sc1
+        INNER JOIN score sc2 ON sc1.score = sc2.score 
+    WHERE
+        sc1.score = sc2.score 
+        AND sc1.student_id <> sc2.student_id 
+    GROUP BY
+        student_id,
+        cource_id 
+    ORDER BY
+        score DESC;
+	-- 这里意外的发现，DISTINCT 和 GROUP BY 一样可以实现去重的效果
+	-- 但二者在设计上侧重点不一样，GROUP BY 侧重用于分组，聚合；DISTINCT 侧重去重
+-- 39、成绩有重复的情况下，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
 -- 庖丁解牛： 得出选张三老师课的最高分，再根据最高分查出学生
 -- 张三老师教授的课程id
     
@@ -98,7 +206,7 @@
             SELECT id from teacher where name ='张三')
         )
     )
--- 39、成绩不重复，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+-- 38、成绩不重复，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
 --  庖丁解牛: order by desc 成绩，取第一条
 -- 张三老师教授的课程id
 
@@ -139,12 +247,12 @@
     ORDER BY
         sc.score DESC 
         LIMIT 1
--- 38、求每门课程的学生人数
+-- 37、求每门课程的学生人数
 -- 庖丁解牛：GROUP BY 、count()
     
     SELECT cource_id,count(*) total from score GROUP BY cource_id
 
--- 37、查询课程编号为 01 且课程成绩在 80 分以上的学生的学号和姓名
+-- 36、查询课程编号为 01 且课程成绩在 80 分以上的学生的学号和姓名
 -- 庖丁解牛： LEFT JOIN 或者 in
 -- 01 课程在80分以上的学号
   
@@ -163,11 +271,11 @@
         student s 
     WHERE
         id IN ( SELECT student_id FROM score WHERE cource_id = '01' AND score >= 80 )
--- 36、查询不及格的课程
+-- 35、查询不及格的课程
 -- 庖丁解牛：where 筛选
 
     SELECT * from score where score < 60
--- 35、查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
+-- 34、查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
 -- 庖丁解牛：INNER JOIN 两个结果集都有的数据
  
     SELECT
@@ -180,7 +288,7 @@
         INNER JOIN student s ON s.id = sc.student_id 
      WHERE
         sc.score >= 70
--- 34、查询所有学生的课程及分数情况（存在学生没成绩，没选课的情况）
+-- 33、查询所有学生的课程及分数情况（存在学生没成绩，没选课的情况）
 -- 庖丁解牛：LEFT JOIN -- 以左表为主，右表没有的用null填充
     
     SELECT
@@ -190,7 +298,7 @@
     FROM
         student s
         LEFT JOIN score sc ON s.id = sc.student_id
--- 33、查询课程名称为「数学」，且分数低于 60 的学生姓名和分数
+-- 32、查询课程名称为「数学」，且分数低于 60 的学生姓名和分数
 -- 庖丁解牛：INNER JOIN、子查询
   
     SELECT
@@ -202,7 +310,7 @@
 
 
 
--- 32、查询平均成绩大于等于 85 的所有学生的学号、姓名和平均成绩
+-- 31、查询平均成绩大于等于 85 的所有学生的学号、姓名和平均成绩
 -- 庖丁解牛： AVG()、 HAVING 、 INNER JOIN、GROUP BY
     
     SELECT
@@ -216,7 +324,7 @@
         student_id 
     HAVING
         avg_score >= 85
--- 31、查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
+-- 30、查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
 -- 庖丁解牛：avg()、GROUP BY、order ORDER BY
   
     SELECT
@@ -229,12 +337,12 @@
     ORDER BY
         avg_score DESC,
         cource_id
--- 30、查询 1990 年出生的学生名单
+-- 29、查询 1990 年出生的学生名单
 -- 庖丁解牛：这里可以使用YEAR() 和 DATE_FORMAT(date,format) 两种方式
 
     SELECT * from student where YEAR(age) = '1990';
     SELECT * from student where DATE_FORMAT(age,'%Y') = '1990';
--- 29、查询同名同性别学生名单，并统计同名人数
+-- 28、查询同名同性别学生名单，并统计同名人数
 -- 庖丁解牛: inner join 、同一张表进行关联
 
     SELECT
@@ -263,21 +371,21 @@
 
     SELECT name, COUNT(*) total FROM student GROUP BY name HAVING total >1;
 
--- 28、查询名字中含有「风」字的学生信息
+-- 27、查询名字中含有「风」字的学生信息
 -- 庖丁解牛 ：like 模糊匹配的使用
 -- % matches one % character.
 -- _ matches one _ character.
     
     SELECT * from student where name like '%风%'
 
--- 27、查询男生、女生人数
+-- 26、查询男生、女生人数
 -- 庖丁解牛：count()、group by 的使用
 -- 方法1：根据sex 进行分组统计
     
     SELECT sex,count(*) sex_total from student GROUP BY sex
  
 
--- 26、查询出只选修两门课程的学生学号和姓名
+-- 25、查询出只选修两门课程的学生学号和姓名
 -- 庖丁解牛
 -- INNER JOIN 、count 、group by 、having 的用法
 -- 分组查询出只选了两门课的学生id
@@ -294,13 +402,13 @@
         student s
         INNER JOIN ( SELECT student_id, count(*) total FROM score sc GROUP BY student_id HAVING total = 2 ) sc ON s.id = sc.student_id
 
--- 25、查询每门课程被选修的学生数
+-- 24、查询每门课程被选修的学生数
 -- 庖丁解牛： count()、 group by 的用法
     
     SELECT cource_id, count(*) total FROM score GROUP BY cource_id
 
 
--- 24、查询各科成绩前三名的记录
+-- 23、查询各科成绩前三名的记录
 -- 庖丁解牛：
 -- 子查询
    
@@ -318,7 +426,7 @@
 
  
 
--- 23、统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
+-- 22、统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
 -- 庖丁解牛：SUM()、IF()、COUNT
 -- 各分数段人数
 -- [0-60]
@@ -351,7 +459,7 @@
     where sc.cource_id = c.id
     GROUP BY sc.cource_id;
 
--- 22、 查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
+-- 21、 查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
 -- 庖丁解牛：总分重复时不保留名次空缺，即两个第一名，下一个为第二名
 
 -- MySQL 8中实现
@@ -427,7 +535,7 @@
                 @current_rank := 0 
             ) r 
         ) t2
--- 21 查询学生的总成绩，并进行排名，总分重复时保留名次空缺
+-- 20 查询学生的总成绩，并进行排名，总分重复时保留名次空缺
 -- 庖丁解牛：总分重复时保留名次空缺，即总分数相同时，若有两个第一名，则下一个为第三名
 -- MYSQL 8 实现
 
@@ -462,7 +570,7 @@
 
 
 
--- 20、按各科成绩进行排序，并显示排名,score 重复时合并名次
+-- 19、按各科成绩进行排序，并显示排名,score 重复时合并名次
 -- 庖丁解牛：,score 重复时合并名次的意思是，如果有两个第一名，则下一个是第二名
 
     SELECT cource_id,score,DENSE_RANK() over(PARTITION by cource_id ORDER BY score desc) ranking from score ;
@@ -478,7 +586,7 @@
             PARTITION BY cource_id 
     ORDER BY
         score DESC)
--- 19、按各科成绩进行排序，并显示排名， score 重复时保留名次空缺
+-- 18、按各科成绩进行排序，并显示排名， score 重复时保留名次空缺
 -- 庖丁解牛：score 重复时保留名次空缺的含义是：如果有两个第一名，那么下一个就是第三名，没有第二名
 
 	SELECT cource_id, score, 
@@ -515,7 +623,7 @@
     -- @ 实现 rownum 自增id
     -- SELECT @i:=@i+1 as rownnum  from score s,(SELECT @i:=0) as init;
     -- window w  为MYSQl 8 中新增的窗口函数
--- 18、查询各科成绩最高分、最低分和平均分：
+-- 17、查询各科成绩最高分、最低分和平均分：
 -- 以如下形式显示：课程 ID，课程 name，最高分，最低分，平均分，及格率，中等率，优良率，优秀率
 -- 及格为>=60，中等为：70-80，优良为：80-90，优秀为：>=90
 -- 要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
@@ -602,7 +710,7 @@
     ORDER BY
         s_count DESC,
         c_id ASC;
--- 17、按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
+-- 16、按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
 -- 庖丁解牛 :GROUP BY ,avg ,ORDER BY 
 
 -- 分数表中所有同学的平均成绩
@@ -644,7 +752,7 @@
 			) t2 ON s.id = t2.student_id
 	
 
--- 16、 检索" 01 "课程分数小于 60，按分数降序排列的学生信息
+-- 15、 检索" 01 "课程分数小于 60，按分数降序排列的学生信息
 
 -- 庖丁解牛 : 考察 order by ，默认是asc (升序),desc 为降序排
 -- 01 课程小于 60 分的学生id 
@@ -674,7 +782,7 @@
     SELECT s.*,sc.score from student s ,(SELECT student_id,score from score where cource_id = '01' and score < 60 ) sc
     
     where s.id = sc.student_id order by score desc
--- 15、查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+-- 14、查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
 
 -- 庖丁解牛： where 、having 的联合使用
 -- 从分数表中 按学生分组，查询分数小于60 的学生id，平均分
@@ -690,7 +798,7 @@
     INNER JOIN(
     SELECT student_id,AVG(score) avg_score from score  where score < 60 GROUP BY student_id HAVING count(*) >= 2)t
     on s.id = t.student_id
--- 14、查询没学过"张三"老师讲授的任一门课程的学生姓名
+-- 13、查询没学过"张三"老师讲授的任一门课程的学生姓名
 -- 庖丁解牛：not in 的使用
 -- 张三老师讲授了哪些课
 
@@ -712,7 +820,7 @@
 			SELECT id from course where teacher_id = (
 				SELECT teacher_id from teacher where `name` ='张三'
 			)) GROUP BY student_id);
--- 13、查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
+-- 12、查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
 -- 庖丁解牛 : 考察 
 -- group by  分组
 -- having    分组之后再进行条件筛选
@@ -723,7 +831,7 @@
 		SELECT student_id from score where cource_id in (
 		SELECT cource_id from score where student_id = '01') and student_id <> '01' GROUP BY student_id HAVING count(*) = (SELECT count(*) from score where student_id = '01'));
 
--- 12、查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息
+-- 11、查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息
 -- 庖丁解牛: 查看 in 关键字的使用
 -- 查询 01 学号的同学选了哪些课,得到课程id
     
@@ -739,7 +847,7 @@
 	SELECT s.* from student s where id in (
 		SELECT student_id from score where cource_id in (
 		SELECT cource_id from score where student_id = '01') and student_id <> '01' GROUP BY student_id)
--- 11、查询没有学全所有课程的同学的信息
+-- 10、查询没有学全所有课程的同学的信息
 -- 庖丁解牛：
 -- 总共有几门课
     
@@ -757,7 +865,7 @@
 
 
 
--- 10、查询学过「张三」老师授课的同学的信息
+-- 9、查询学过「张三」老师授课的同学的信息
 -- 庖丁解牛：有多种处理方法
 -- 方法1：
 -- 查询出张三老师的教师id
@@ -795,7 +903,7 @@
 
 
 
--- 9、查询「李」姓老师的数量
+-- 8、查询「李」姓老师的数量
 
     SELECT count(*) from teacher where `name` like '李%';
 
@@ -938,60 +1046,3 @@
 					(SELECT student_id,score FROM score where cource_id = '02')sc2
 					ON sc1.student_id = sc2.student_id where sc1.score > sc2.score
 		)t on s.id = t.student_id
-
-查询不同课程成绩相同的学生的学生编号、课程编号、学生成绩
-SELECT sc1.student_id, sc1.cource_id, sc1.score FROM score sc1
-INNER JOIN score sc2 ON sc1.student_id = sc2.student_id
-WHERE sc1.cource_id <> sc2.cource_id
-GROUP BY student_id, cource_id;
-
-4
-查询每门功成绩最好的前两名
-SELECT sc1.cource_id, sc1.student_id, sc1.score FROM score sc1
-WHERE (SELECT COUNT(*) FROM score sc2
-       WHERE sc1.cource_id = sc2.cource_id
-       AND sc1.score < sc2.score) < 2
-ORDER BY cource_id;
-
-4
-5
----MYSQL8.0 实现
-SELECT *
-FROM (SELECT cource_id, student_id, score,
-      ROW_NUMBER() OVER (PARTITION BY cource_id ORDER BY score DESC) ranking
-      FROM score) r
-WHERE r.ranking < 3;
-
-4
-5
-6
-统计每门课程的学生选修人数（超过 5 人的课程才统计）。
-SELECT cource_id, COUNT(*) student_num FROM score
-GROUP BY(cource_id) HAVING COUNT(*) > 5;
-1
-2
-检索至少选修两门课程的学生学号
-SELECT student_id FROM score GROUP BY student_id HAVING COUNT(*) >= 2;
-1
-查询选修了全部课程的学生信息
-SELECT student_id FROM score GROUP BY student_id
-HAVING COUNT(*) = (SELECT COUNT(*) FROM course);
-1
-2
-查询各学生的年龄，只按年份来算
-SELECT name, (YEAR(CURRENT_DATE()) - YEAR(age)) age FROM student;
-1
-按照出生日期来算，当前月日 < 出生年月的月日则，年龄减一
-SELECT name, TIMESTAMPDIFF(YEAR, age, CURDATE()) FROM student;
-1
-查询本周过生日的学生
-SELECT * FROM student WHERE WEEKOFYEAR(age) = WEEKOFYEAR(CURRENT_DATE());
-1
-查询下周过生日的学生
-SELECT * FROM student WHERE WEEKOFYEAR(age) = WEEKOFYEAR(DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY));
-1
-查询本月过生日的学生
-SELECT * FROM student WHERE MONTH(age) = MONTH(CURRENT_DATE());
-1
-查询下月过生日的学生
-SELECT * FROM student WHERE MONTH(age) = MONTH(DATE_ADD(CURRENT_DATE(), INTERVAL 1 MONTH));
