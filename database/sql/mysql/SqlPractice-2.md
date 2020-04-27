@@ -3,9 +3,6 @@
  ##MYSQL 版本 ：8.0.12
  ##数据准备 
  
-    -- ----------------------------
-    -- Table structure for dept
-    -- ----------------------------
     DROP TABLE IF EXISTS `dept`;
     CREATE TABLE `dept`  (
       `DEPTNO` int(11) NOT NULL COMMENT '部门编号',
@@ -45,20 +42,20 @@
     -- ----------------------------
     -- Records of emp
     -- ----------------------------
-    INSERT INTO `emp` VALUES (7369, 'SMITH', '职员', 7566, '1980-12-17', 800, NULL, 20);
-    INSERT INTO `emp` VALUES (7499, 'ALLEN', '销售员', 7698, '1981-02-20', 1600, 300, 30);
-    INSERT INTO `emp` VALUES (7521, 'WARD', '销售员', 7698, '1981-02-22', 1250, 500, 30);
-    INSERT INTO `emp` VALUES (7566, 'JONES', '经理', 7839, '1981-04-02', 2975, NULL, 20);
-    INSERT INTO `emp` VALUES (7654, 'MARTIN', '销售员', 7698, '1981-09-28', 1250, 1400, 30);
-    INSERT INTO `emp` VALUES (7698, 'BLAKE', '经理', 7839, '1981-05-01', 2850, NULL, 30);
-    INSERT INTO `emp` VALUES (7782, 'CLARK', '经理', 7839, '1981-06-09', 2450, NULL, 10);
-    INSERT INTO `emp` VALUES (7788, 'SCOTT', '职员', 7566, '1987-07-03', 3000, 2000, 20);
-    INSERT INTO `emp` VALUES (7839, 'KING', '董事长', NULL, '1981-11-17', 5000, NULL, 10);
-    INSERT INTO `emp` VALUES (7844, 'TURNERS', '销售员', 7698, '1981-09-08', 1500, 50, 30);
-    INSERT INTO `emp` VALUES (7876, 'ADAMS', '职员', 7566, '1987-07-13', 1100, NULL, 20);
-    INSERT INTO `emp` VALUES (7900, 'JAMES', '职员', 7698, '1981-12-03', 1250, NULL, 30);
-    INSERT INTO `emp` VALUES (7902, 'FORD', '销售员', 7566, '1981-12-03', 3000, NULL, 20);
-    INSERT INTO `emp` VALUES (7934, 'MILLER', '职员', 7782, '1981-01-23', 1300, NULL, 10);
+    INSERT INTO `emp` VALUES (7369, 'SMITH', 'CLERK', 7902, '1980-12-17', 800, NULL, 20);
+    INSERT INTO `emp` VALUES (7499, 'ALLEN', 'SALESMAN', 7698, '1981-02-20', 1600, 300, 30);
+    INSERT INTO `emp` VALUES (7521, 'WARD', 'SALESMAN', 7698, '1981-02-22', 1250, 500, 30);
+    INSERT INTO `emp` VALUES (7566, 'JONES', 'MANAGER', 7839, '1981-04-02', 2975, NULL, 20);
+    INSERT INTO `emp` VALUES (7654, 'MARTIN', 'SALESMAN', 7698, '1981-09-28', 1250, 1400, 30);
+    INSERT INTO `emp` VALUES (7698, 'BLAKE', 'MANAGER', 7839, '1981-05-01', 2850, NULL, 30);
+    INSERT INTO `emp` VALUES (7782, 'CLARK', 'MANAGER', 7839, '1981-06-09', 2450, NULL, 10);
+    INSERT INTO `emp` VALUES (7788, 'SCOTT', 'ANALYST', 7566, '1987-07-03', 3000, NULL, 20);
+    INSERT INTO `emp` VALUES (7839, 'KING', 'PRESIDENT', NULL, '1981-11-17', 5000, NULL, 10);
+    INSERT INTO `emp` VALUES (7844, 'TURNER', 'SALESMAN', 7698, '1981-09-08', 1500, 0, 30);
+    INSERT INTO `emp` VALUES (7876, 'ADAMS', 'CLERK', 7788, '1987-07-13', 1100, NULL, 20);
+    INSERT INTO `emp` VALUES (7900, 'JAMES', 'CLERK', 7698, '1981-12-03', 950, NULL, 30);
+    INSERT INTO `emp` VALUES (7902, 'FORD', 'ANALYST', 7566, '1981-12-03', 3000, NULL, 20);
+    INSERT INTO `emp` VALUES (7934, 'MILLER', 'CLERK', 7782, '1981-01-23', 1300, NULL, 10);
     
     -- ----------------------------
     -- Table structure for salgrade
@@ -73,50 +70,113 @@
     -- ----------------------------
     -- Records of salgrade
     -- ----------------------------
-    INSERT INTO `salgrade` VALUES (1, 500, 1000);
-    INSERT INTO `salgrade` VALUES (2, 1001, 1500);
-    INSERT INTO `salgrade` VALUES (3, 1501, 2000);
+    INSERT INTO `salgrade` VALUES (1, 700, 1200);
+    INSERT INTO `salgrade` VALUES (2, 1201, 1400);
+    INSERT INTO `salgrade` VALUES (3, 1401, 2000);
     INSERT INTO `salgrade` VALUES (4, 2001, 3000);
     INSERT INTO `salgrade` VALUES (5, 3001, 9999);
+    
      
 
- SQL 练习
-1、查找部门30中员工的详细信息。
-select * from emp where deptno = 30;
-2、找出从事clerk工作的员工的编号、姓名、部门号。
-select empno,ename,deptno from emp where job = 'clerk';
-3、检索出奖金多于基本工资的员工信息。
-select * from emp where comm > sal;
-4、检索出奖金多于基本工资60%的员工信息。
-select * from emp where comm > sal * 0.6;
-5、找出10部门的经理、20部门的职员 的员工信息。
-select * from emp where deptno = 10 and job='MANAGER' or deptno = 20 and job = 'CLERK';
-6、找出10部门的经理、20部门的职员 或者既不是经理也不是职员但是工资高于2000元的员工信息。
-select * from emp
-where deptno = 10 and job='MANAGER'
-or deptno = 20 and job = 'CLERK'
-or job!='MANAGER' and job != 'CLERK' and sal > 2000 ;
- job not in ('MANAGER','CLERK')
-7、找出获得奖金的员工的工作。
-select * from emp where comm > 0;
-8、找出奖金少于100或者没有获得奖金的员工的信息。
-select * from emp where comm < 100 or comm is null;
-9、找出姓名以A、B、S开始的员工信息。
-select * from emp where ename like 'A%' or ename like 'B%' or ename like 'S%';
-10、找到名字长度为6个字符的员工信息。
-select * from emp where length(ename) = 6;
-select * from emp where ename like '______';
-11、名字中不包含R字符的员工信息。
-select * from emp where ename not like '%R%';
-12、返回员工的详细信息并按姓名排序。
-select * from emp order by ename asc;
-13、返回员工的信息并按工作降序工资升序排列。
-select * from emp order by job desc , sal asc;
-14、计算员工的日薪(按30天)。
-select ename,sal/30 as '日薪' from emp;
-select ename,truncate(sal/30,2) '日薪' from emp;
-15、找出姓名中包含A的员工信息。
-select * from emp where ename like '%A%';
+     
+## SQL 练习
+参考：https://dev.mysql.com/doc/refman/8.0/en/string-comparison-functions.html 
+
+
+
+-- 15、找出姓名中包含A的员工信息。
+-- 庖丁解牛：LIKE 的的使用 或者 LOCATE()
+	
+	SELECT * from emp where ENAME LIKE '%A%';
+	SELECT * from emp where LOCATE('A',ENAME) > 0;
+
+-- 14、计算员工的日薪(按30天)。
+-- 庖丁解牛 : 查询的时候支持四则运算的操作
+
+	SELECT EMPNO, SAL/30 as '日薪' from emp;
+
+-- 这小数太多了，保留两位,这里拓展集中mysql 中保留几位小数的方法， 这里保留2位
+-- 方法1；TRUNCATE(X,D) 返回数字X，截断到D小数位。 如果D为0，结果没有小数点或小数部分。 D是负数，导致值X的小数点左边的D数字变为零。
+
+-- 方法2：round(x,d) 用于数据的四舍五入,round(x)  ,其实就是round(x,0),也就是默认d为0；
+-- 方法3：FORMAT（X,D）：强制保留D位小数，整数部分超过三位的时候以逗号分割，并且返回的结果是string类型的
+-- 方法4：convert（value，type）;类型转换，相当于截取
+
+	SELECT EMPNO, TRUNCATE(SAL/30,2) as '日薪1', round(SAL/30,2) as '日薪2',FORMAT(SAL/30,2) as '日薪3',convert(SAL/30,DECIMAL(10,2)) as '日薪4' from emp;
+
+-- 13、返回员工的信息并按工作降序工资升序排列。
+-- 庖丁解牛：ORDER BY DESC、ASC
+	
+	SELECT * from emp ORDER BY JOB DESC,SAL ASC
+
+
+-- 12、返回员工的详细信息并按姓名排序。
+-- 庖丁解牛： ORDER BY
+	
+	SELECT * from emp ORDER BY ENAME
+
+-- 11、名字中不包含R字符的员工信息。
+-- 庖丁解牛,两种方法：
+-- 方法1：not like 
+-- 方法2：LOCATE,如果包含，返回>0的数，否则返回0 
+	
+	SELECT * from emp where ENAME not like '%R%';
+	SELECT * from emp where LOCATE('R',ENAME) = 0;
+
+
+-- 10、找到名字长度为6个字符的员工信息。
+-- 庖丁解牛：CHAR_LENGTH(str)字符函数的使用
+-- 如果str 是5个包含2个字节的字符，那么LENGTH(str) 返回10
+-- CHAR_LENGTH(str) 和 CHARACTER_LENGTH(str) 返回 5
+
+	SELECT * from emp where CHAR_LENGTH(ENAME) = 6;
+
+--  9、找出姓名以A、B、S开始的员工信息。
+-- 庖丁解牛： like 模糊匹配，有两个占位符可以使用
+-- % matches any number of characters, even zero characters.
+-- _ matches exactly one character.
+
+	SELECT * from emp where ENAME LIKE 'A%' OR ENAME LIKE 'B%' OR ENAME LIKE 'C%'
+
+--  8、找出奖金少于100或者没有获得奖金的员工的信息。
+	
+	SELECT * from emp where COMM < 100 or  ISNULL(COMM)
+
+-- 7、找出获得奖金的员工的工作。
+ 
+	SELECT JOB,COMM from emp where COMM > 0
+
+-- 6、找出10部门的经理、20部门的职员 或者既不是经理也不是职员但是工资高于2000元的员工信息。
+
+	SELECT * from emp where DEPTNO = 10 and JOB = 'MANAGER' or DEPTNO = 20 and JOB ='CLERK'
+
+  or (JOB not in ('manager','CLERK') and SAL > 2000)
+
+-- 5、找出10部门的经理、20部门的职员 的员工信息。
+-- 庖丁解牛： or 联合使用
+
+	SELECT * from emp where DEPTNO = 10 and JOB = '经理' or DEPTNO = 20 and JOB ='职员'
+
+
+-- 4、检索出奖金多于基本工资60%的员工信息。
+	
+	SELECT * from emp where COMM > SAL*0.6
+
+-- 3、检索出奖金多于基本工资的员工信息。
+	
+	SELECT * from emp where COMM > SAL
+
+
+-- 2、找出从事clerk工作的员工的编号、姓名、部门号。
+	
+	select empno,ename,deptno from emp where job = 'clerk';
+
+
+-- 1、查找部门30中员工的详细信息。
+-- 庖丁解牛：where 筛选
+	
+	SELECT * from emp where DEPTNO = 30
+ 
 
 多表练习
 
