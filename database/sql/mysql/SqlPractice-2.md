@@ -129,12 +129,11 @@
 -- 18、返回员工和所属经理的姓名。
 -- 庖丁解牛： 一张表的自连接
  
-select e.ename '员工姓名', m.ename '所属经理' from emp e , emp m where e.mgr = m.empno;
-
+    select e.ename '员工姓名', m.ename '所属经理' from emp e , emp m where e.mgr = m.empno;
 -- 17、工资水平多于smith的员工信息。
 -- 庖丁解牛：子查询
-SELECT  * from emp where SAL > (SELECT SAL from emp where ENAME ='smith')
-
+    
+    SELECT  * from emp where SAL > (SELECT SAL from emp where ENAME ='smith')
 
 -- 16、返回拥有员工的部门名、部门号。
 -- 庖丁解牛： GROUP BY 分组统计，和 distinct 去重
