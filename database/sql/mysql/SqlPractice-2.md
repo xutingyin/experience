@@ -84,6 +84,70 @@
 
 
 
+-- 20、返回员工姓名及其所在的部门名称。
+-- 多表关联查询
+ 
+    SELECT
+        e.ENAME,
+        d.DNAME 
+    FROM
+        emp e,
+        dept d 
+    WHERE
+        e.DEPTNO = d.DEPTNO
+-- 或者 INNER JOIN 替换
+   
+    SELECT
+        e.ENAME,
+        d.DNAME 
+    FROM
+        emp e
+        INNER JOIN dept d ON e.DEPTNO = d.DEPTNO
+
+--  19、返回雇员的雇佣日期早于其经理雇佣日期的员工及其经理姓名。
+
+    SELECT
+            e.ENAME AS '员工姓名',
+            m.ENAME AS '所属经理' 
+        FROM
+            emp e,
+            emp m 
+        WHERE
+            e.MGR = m.EMPNO 
+            AND e.HIREDATE < m.HIREDATE
+-- 能够使用逗号连接的，等价于inner join 可替换
+
+	SELECT
+		e.ENAME AS '员工姓名',
+		m.ENAME AS '所属经理' 
+	FROM
+		emp e
+		INNER JOIN emp m ON e.MGR = m.EMPNO 
+		AND e.HIREDATE < m.HIREDATE
+
+
+-- 18、返回员工和所属经理的姓名。
+-- 庖丁解牛： 一张表的自连接
+ 
+select e.ename '员工姓名', m.ename '所属经理' from emp e , emp m where e.mgr = m.empno;
+
+-- 17、工资水平多于smith的员工信息。
+-- 庖丁解牛：子查询
+SELECT  * from emp where SAL > (SELECT SAL from emp where ENAME ='smith')
+
+
+-- 16、返回拥有员工的部门名、部门号。
+-- 庖丁解牛： GROUP BY 分组统计，和 distinct 去重
+
+	SELECT
+		d.DNAME,
+		d.DEPTNO 
+	FROM
+		dept d
+		INNER JOIN ( SELECT DEPTNO FROM emp GROUP BY DEPTNO HAVING count(*) > 0 ) t ON d.DEPTNO = t.DEPTNO;
+	-- 或者
+	select distinct d.dname, d.deptno from dept d,emp e where d.deptno = e.deptno;
+
 -- 15、找出姓名中包含A的员工信息。
 -- 庖丁解牛：LIKE 的的使用 或者 LOCATE()
 	
@@ -180,24 +244,6 @@
 
 多表练习
 
-1、返回拥有员工的部门名、部门号。
-select distinct d.dname, d.deptno from dept d,emp e where d.deptno = e.deptno;
-2、工资水平多于smith的员工信息。
-select *from emp where sal > (select sal from emp where ename = 'smith');
-3、返回员工和所属经理的姓名。
-select e.ename,m.ename from emp e
-left outer join emp m on e.mgr = m.empno;
-select e.ename ,(select m.ename from emp m where m.empno = e.mgr) ename from emp e;
-select e.ename , m.ename from emp e , emp m where e.mgr = m.empno;
-4、返回雇员的雇佣日期早于其经理雇佣日期的员工及其经理姓名。
-select e.ename,m.ename from emp e
-inner join emp m on e.mgr = m.empno
-where e.hiredate < m.hiredate;
-select e.ename,m.ename from emp e,emp m
-where e.mgr=m.empno
-and e.hiredate < m.hiredate;
-5、返回员工姓名及其所在的部门名称。
-select e.ename,d.dname from emp e , dept d where e.deptno = d.deptno;
 6、返回从事clerk工作的员工姓名和所在部门名称。
 select e.ename,d.dname
 from emp e , dept d
