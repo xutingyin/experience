@@ -83,6 +83,70 @@
 参考：https://dev.mysql.com/doc/refman/8.0/en/string-comparison-functions.html 
 
 
+-- 25、返回与SCOTT从事相同工作的员工。
+-- 庖丁解牛： 
+-- SCOTT 从事的工作
+
+    SELECT * from emp where JOB =(
+        SELECT JOB from emp where ENAME = 'SCOTT')
+
+
+-- 24、返回工资水平多于平均工资的员工。
+-- 庖丁解牛：子查询，avg 
+
+	SELECT
+		* 
+	FROM
+		emp 
+	WHERE
+		SAL > ( SELECT avg( sal ) FROM emp )
+-- 23、返回销售部(sales)所有员工的姓名。
+-- 庖丁解牛：
+	
+	SELECT
+		e.ENAME 
+	FROM
+		emp e,
+		dept d 
+	WHERE
+		e.DEPTNO = d.DEPTNO 
+		AND d.DNAME = 'sales';
+	
+	-- INNER JOIN 
+		
+    SELECT
+        e.ENAME 
+    FROM
+        emp e
+        INNER JOIN dept d ON e.DEPTNO = d.DEPTNO 
+        AND d.DNAME = 'sales';
+
+ 
+-- 22、返回部门号及其本部门的最低工资。
+-- 庖丁解牛： min()、GROUP BY 的使用
+
+    SELECT
+            DEPTNO,
+            MIN( SAL ) min_sal 
+        FROM
+            emp 
+        GROUP BY
+            DEPTNO
+
+ 
+
+-- 21、返回从事clerk工作的员工姓名和所在部门名称。
+-- 庖丁解牛：从事clerk 工作的员工
+
+    SELECT
+            e.ENAME,
+            d.DNAME 
+        FROM
+            emp e,
+            dept d 
+        WHERE
+            e.DEPTNO = d.DEPTNO 
+            AND e.JOB = 'clerk'
 
 -- 20、返回员工姓名及其所在的部门名称。
 -- 多表关联查询
