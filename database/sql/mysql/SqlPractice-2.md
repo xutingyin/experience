@@ -82,6 +82,165 @@
 ## SQL 练习
 参考：https://dev.mysql.com/doc/refman/8.0/en/string-comparison-functions.html 
 
+PS:经过两套练习，个人觉得遇到比较复杂的问题时，首先要在心态上藐视它。相信自己一定可以解决。其次将复杂的问题，拆分成多个小问题，按照一步一步来，问题便迎刃而解。
+
+-- 35.工资等级多于smith的员工信息。
+-- 庖丁解牛： 子查询
+-- 查出smith 的工资等级
+
+	SELECT GRADE FROM salgrade s,emp e
+	where e.SAL > s.LOSAL and e.SAL < s.HISAL and e.ENAME = 'smith'
+
+-- 再查询出高于这一等级的员工信息
+-- 工资高于最高工资（HISAL）并且等级等于 smith 的等级，即为高于smith 等级的员工
+
+	SELECT e.* from emp e,salgrade s
+	where e.SAL > s.HISAL  and GRADE = (SELECT GRADE FROM salgrade s,emp e
+	where e.SAL > s.LOSAL and e.SAL < s.HISAL and e.ENAME = 'smith');
+
+ 
+-- 34、返回工资为二等级的职员名字、部门所在地、和二等级的最低工资和最高工资
+-- 庖丁解牛 ：多表链接，范围查找
+	
+	SELECT
+			e.ENAME,
+			d.LOC,
+			s.LOSAL,
+			s.HISAL
+		FROM
+			emp e,
+			salgrade s,
+			dept d 
+		WHERE
+			e.DEPTNO = d.DEPTNO 
+			AND s.GRADE = 2
+			and e.SAL BETWEEN s.LOSAL AND s.HISAL
+
+ 
+
+
+-- 33、返回工资处于第四级别的员工的姓名。
+-- 庖丁解牛 ：范围查询
+
+	SELECT ENAME from  emp e,salgrade s
+	WHERE e.SAL >= s.LOSAL and e.SAL <= s.HISAL
+	and s.GRADE = 4;
+
+-- 或者
+
+	SELECT ENAME from emp e,(SELECT LOSAL,HISAL FROM salgrade where GRADE = 4) s
+	where e.SAL BETWEEN s.LOSAL and s.HISAL
+
+-- 32、计算出员工的年薪，并且以年薪排序。
+-- 庖丁解牛：算术运算和 ORDER BY
+	
+	SELECT
+		ENAME,
+		SAL * 12 AS annual_sal 
+	FROM
+		emp 
+	ORDER BY
+		annual_sal
+
+-- 31、返回员工工作及其从事此工作的最低工资。
+-- 庖丁解牛： MIN()函数、GROUP BY的使用
+	
+    SELECT
+            JOB,
+            MIN( SAL ) '最低工资' 
+        FROM
+            emp 
+        GROUP BY
+            JOB
+
+-- 30、返回员工的详细信息。(包括部门名)
+-- 庖丁解牛：内连接的使用
+	
+	SELECT
+		e.*,
+		d.DNAME 
+	FROM
+		emp e,
+		dept d 
+	WHERE
+		e.DEPTNO = d.DEPTNO
+
+
+-- 29、返回员工的姓名、所在部门名及其工资。
+-- 庖丁解牛：内连接的使用
+	
+	SELECT
+		e.ENAME,
+		d.DNAME,
+		e.SAL 
+	FROM
+		emp e,
+		dept d 
+	WHERE
+		e.DEPTNO = d.DEPTNO;
+
+	-- 等价于
+	
+	SELECT
+		e.ENAME,
+		d.DNAME,
+		e.SAL 
+	FROM
+		emp e INNER JOIN
+		dept d 
+	ON
+		e.DEPTNO = d.DEPTNO
+
+-- 28、返回部门号、部门名、部门所在位置及其每个部门的员工总数。
+-- 庖丁解牛：count() 统计数量、内连接（英文逗号和inner join 等价）,GROUP BY
+
+	SELECT
+			d.DEPTNO,
+			d.DNAME,
+			d.LOC,
+			count(*) AS '部门员工总数' 
+		FROM
+			emp e,
+			dept d 
+		WHERE
+			e.DEPTNO = d.DEPTNO 
+		GROUP BY
+			e.DEPTNO
+
+ 
+-- 27、返回工资高于30部门所有员工工资水平的员工信息。
+-- 庖丁解牛：max() 和子查询的使用
+
+	SELECT
+		ENAME,
+		SAL 
+	FROM
+		emp 
+	WHERE
+		sal > ( SELECT max(SAL) FROM emp WHERE DEPTNO = 30 );
+
+
+-- 或者使用all()
+	
+	SELECT
+		ENAME,
+		SAL 
+	FROM
+		emp 
+	WHERE
+		sal > all(SELECT SAL from emp where DEPTNO = 30) ;
+
+
+--  26、返回与30部门员工工资水平相同的员工姓名与工资。
+-- 庖丁解牛：in 子查询
+
+	SELECT
+		ENAME,
+		SAL 
+	FROM
+		emp 
+	WHERE
+		sal IN ( SELECT SAL FROM emp WHERE DEPTNO = 30 );
 
 -- 25、返回与SCOTT从事相同工作的员工。
 -- 庖丁解牛： 
@@ -303,69 +462,3 @@
 -- 庖丁解牛：where 筛选
 	
 	SELECT * from emp where DEPTNO = 30
- 
-
-多表练习
-
-6、返回从事clerk工作的员工姓名和所在部门名称。
-select e.ename,d.dname
-from emp e , dept d
-where e.deptno = d.deptno and e.job = 'CLERK';
-7、返回部门号及其本部门的最低工资。
-select deptno ,min(sal) sal
-from emp
-group by deptno
-8、返回销售部(sales)所有员工的姓名。
-select e.ename from emp e,dept d
-where e.deptno = d.deptno and d.dname = 'sales';
-select ename from emp where deptno=(select deptno from dept where dname='sales');
-9、返回工资水平多于平均工资的员工。
-select * from emp e
-where e.sal > (select avg(sal) from emp);
-10、返回与SCOTT从事相同工作的员工。
-select * from emp
-where job = (select job from emp where ename = 'scott');
-select e1.* from emp e1 , (select empno,job from emp where ename = 'scott') e2
-where e1.job = e2.job and e1.empno != e2.empno;
-11、返回与30部门员工工资水平相同的员工姓名与工资。
-select ename,sal from emp
-where sal in (select sal from emp where deptno = 30);
-12、返回工资高于30部门所有员工工资水平的员工信息。
-select * from emp
-where sal > all(select sal from emp where deptno = 30);
-select * from emp
-where sal > (select max(sal) from emp where deptno = 30);
-13、返回部门号、部门名、部门所在位置及其每个部门的员工总数。
-select dept.deptno,dept.dname,dept.loc,count(emp.deptno) number from dept,emp
-where dept.deptno = emp.deptno
-group by emp.deptno;
-14、返回员工的姓名、所在部门名及其工资。
-select ename,dname,sal from emp ,dept
-where emp.deptno = dept.deptno;
-15、返回员工的详细信息。(包括部门名)
-select e.* , d.dname from emp e, dept d
-where e.deptno = d.deptno;
-16、返回员工工作及其从事此工作的最低工资。
-select job , min(sal) sal from emp
-group by job
-17、计算出员工的年薪，并且以年薪排序。
-select ename, sal * 12 as ySalary from emp order by ySalary;
-18、返回工资处于第四级别的员工的姓名。
-select ename,sal from emp e ,salgrade s
-where e.sal >= s.losal and e.sal <= s.hisal
-and s.grade = 4;
-select emp.ename,emp.sal from
-emp ,(select losal,hisal from salgrade where grade=4) g
-where emp.sal between g.losal and g.hisal;
-19、返回工资为二等级的职员名字、部门所在地、和二等级的最低工资和最高工资
-select ename ,dname ,sal ,losal,hisal from emp,dept,salgrade
-where emp.deptno = dept.deptno and grade = 2
-and sal >= losal and sal < hisal;
-20.工资等级多于smith的员工信息。
-select grade from salgrade s ,emp e
-where s.losal < e.sal and s.hisal > e.sal and e.ename = 'smith';
-select e.* from emp e, salgrade s
-where s.hisal < e.sal and s.grade = 1;
-select e.* from emp e, salgrade s
-where s.hisal < e.sal and s.grade = (select grade from salgrade s ,emp e
-where s.losal < e.sal and s.hisal > e.sal and e.ename = 'smith');
