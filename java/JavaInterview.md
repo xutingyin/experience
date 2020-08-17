@@ -383,7 +383,15 @@
 
 **面向过程**：是分析解决问题的步骤，然后用函数把这些步骤一步一步地实现，然后在使用的时候一一调用则可。性能较高，所以单片机、嵌入式开发等一般采用面向过程开发
 
-**面向对象**：是把构成问题的事务分解成各个对象，而建立对象的目的也不是为了完成一个个步骤，而是为了描述某个事物在解决整个问题的过程中所发生的行为。面向对象有**封装、继承、多态**的特性，所以易维护、易复用、易扩展。可以设计出低耦合的系统。 但是性能上来说，比面向过程要低。
+**面向对象**：是把构成问题的事物分解成各个对象，而建立对象的目的也不是为了完成一个个步骤，而是为了描述某个事物在解决整个问题的过程中所发生的行为。面向对象有**封装、继承、多态**的特性，所以易维护、易复用、易扩展。可以设计出低耦合的系统。 但是性能上来说，面向过程要低。
+
+**抽象**：将现实世界的事物(例如一个人、一辆车)抽离其关键特性、用计算机语言来描述现实世界。例如一个人抽象成一个Person对象，它具备一个人现实世界中的name、age、sex等属性，具有say()、run()等行为。
+
+**封装：** 对类的内部属性进行隐藏，对外提供方法进行访问，提供安全性。
+
+**继承：**对父子关系的提取共有属性和方法到父类中，减少代码的重复编写，提供复用性。
+
+**多态：**一种规范(或者说标准)的多种实现方式，提供便携的扩展性。
 
 
 
@@ -434,7 +442,7 @@
 
 
 
-　instanceof 严格来说是Java中的一个双目运算符，用来测试一个对象是否为一个类的实例，用法为：
+　instanceof  严格来说是Java中的一个双目运算符，用来测试一个对象是否为一个类的实例，用法为：
 
 ```java
 boolean result = obj instanceof Class
@@ -561,6 +569,8 @@ private static class IntegerCache {
 
 上面的代码中i1和i2的数值为100，因此会直接从cache中取已经存在的对象，所以i1和i2指向的是同一个对象，而i3和i4则是分别指向不同的对象。
 
+另外，Byte、Short、Long、Char这几个装箱类的valueOf()方法是以128位分界线做了缓存的，假如是128以下且-128以上的值是会取缓存里面的引用的。
+
 
 
 ***面试题2：以下代码输出什么？***
@@ -587,7 +597,7 @@ false
 false
 ```
 
-原因： 在某个范围内的整型数值的个数是有限的，而浮点数却不是。 
+原因： Float、Double没有做缓存。因为在某个范围内的整型数值的个数是有限的，而浮点数却不是。 
 
 
 
@@ -595,7 +605,7 @@ false
 
 **重写(Override)**
 
-从字面上看，重写就是 重新写一遍的意思。其实就是在子类中把父类本身有的方法重新写一遍。子类继承了父类原有的方法，但有时子类并不想原封不动的继承父类中的某个方法，所以在方法名，参数列表，返回类型(除过子类中方法的返回值是父类中方法返回值的子类时)都相同的情况下， 对方法体进行修改或重写，这就是重写。但要注意子类函数的访问修饰权限不能少于父类的。
+从字面上看，重写就是 重新写一遍的意思。其实就是在子类中把父类本身有的方法重新写一遍。子类继承了父类原有的方法，但有时子类并不想原封不动的继承父类中的某个方法，所以在**方法名，参数列表，返回类型**(除过子类中方法的返回值是父类中方法返回值的子类时)都相同的情况下， 对方法体进行修改或重写，这就是重写。但要注意子类函数的访问修饰权限不能少于父类的。
 
 ```java
 public class Father {
@@ -633,7 +643,7 @@ class Son extends Father{
 
 **重载（Overload）**
 
-在一个类中，同名的方法如果有不同的参数列表（**参数类型不同、参数个数不同甚至是参数顺序不同**）则视为重载。同时，重载对返回类型没有要求，可以相同也可以不同，但**不能通过返回类型是否相同来判断重载**。 
+在一个类中，同名的方法如果有不同的参数列表（**参数类型不同、参数个数不同甚至是参数顺序不同**）则视为重载。同时，重载对返回类型没有要求，可以相同也可以不同，但**不能通过返回类型是否相同来判断重载**。 【**即返回类型不能作为是否重载的标识**】
 
 ```java
 public class Father {
@@ -678,7 +688,7 @@ int a=10 与 long b=10L 与 double c=10.0都是相同的（为true），因为�
 
 **equals**：
 
-equals用来比较的是两个对象的内容是否相等，由于所有的类都是继承自java.lang.Object类的，所以适用于所有对象，如果没有对该方法进行覆盖的话，调用的仍然是Object类中的方法，而Object中的equals方法返回的却是==的判断。
+equals用来比较的是两个**对象的内容**是否相等，由于所有的类都是继承自java.lang.Object类的，所以适用于所有对象，如果没有对该方法进行覆盖的话，调用的仍然是Object类中的方法，而Object中的equals方法返回的却是==的判断。
 
 
 
@@ -765,7 +775,7 @@ ArrayList底层的实现是Array, 数组扩容实现
 
 **1、两者父类不同**
 
-HashMap是继承自AbstractMap类，而Hashtable是继承自Dictionary类。不过它们都实现了同时实现了map、Cloneable（可复制）、Serializable（可序列化）这三个接口。
+HashMap是继承自AbstractMap类，而Hashtable是继承自Dictionary类。不过它们都实现了同时实现了Map、Cloneable（可复制）、Serializable（可序列化）这三个接口。
 
 **2、对外提供的接口不同**
 
@@ -778,17 +788,45 @@ contains()方法判断该Hashtable是否包含传入的value。它的作用与co
 
 Hashtable：key和value都不能为null。
 
+```java
+public synchronized V put(K key, V value) {
+        // Make sure the value is not null
+        if (value == null) {
+            throw new NullPointerException();
+        }
+
+        // Makes sure the key is not already in the hashtable.
+        Entry<?,?> tab[] = table;
+    	// 这里key 为null 直接报NullPointerException
+        int hash = key.hashCode();
+        int index = (hash & 0x7FFFFFFF) % tab.length;
+        @SuppressWarnings("unchecked")
+        Entry<K,V> entry = (Entry<K,V>)tab[index];
+        for(; entry != null ; entry = entry.next) {
+            if ((entry.hash == hash) && entry.key.equals(key)) {
+                V old = entry.value;
+                entry.value = value;
+                return old;
+            }
+        }
+        addEntry(hash, key, value, index);
+        return null;
+    }
+```
+
+
+
 HashMap：key可以为null，但是这样的key只能有一个，因为必须保证key的唯一性；可以有多个key值对应的value为null。
 
 **4、安全性不同**
 
-HashMap是线程不安全的，在多线程并发的环境下，可能会产生死锁等问题，因此需要开发人员自己处理多线程的安全问题。
+HashMap是线程不安全的，在多线程并发的环境下，可能会产生死锁【因为在扩容的时候，可能出现死循环】等问题，因此需要开发人员自己处理多线程的安全问题。
 
 Hashtable是线程安全的，它的每个方法上都有synchronized 关键字，因此可直接用于多线程中。
 
 虽然HashMap是线程不安全的，但是它的效率远远高于Hashtable，这样设计是合理的，因为大部分的使用场景都是单线程。当需要多线程操作的时候可以使用线程安全的ConcurrentHashMap。
 
-ConcurrentHashMap虽然也是线程安全的，但是它的效率比Hashtable要高好多倍。因为ConcurrentHashMap使用了分段锁，并不对整个数据进行锁定。
+ConcurrentHashMap虽然也是线程安全的，但是它的效率比Hashtable要高好多倍。因为ConcurrentHashMap使用了**分段锁，并不对整个数据进行锁定**。
 
 **5、初始容量大小和每次扩充容量大小不同**
 
@@ -806,17 +844,15 @@ Collections是集合类的一个帮助类， 它包含有各种有关集合操�
 
 - 强引用
 
-   强引用是平常中使用最多的引用，强引用在程序内存不足（OOM）的时候也不会被回收，使用方式：
+   强引用是平常中使用最多的引用，**强引用在程序内存不足（OOM）的时候也不会被回收**，使用方式：
 
   ```java
-  String str = new String("str");
+  String str = new String("str"); //此时的str 就是一个强引用
   ```
-
-  
 
 - 软引用
 
-   软引用在程序内存不足时，会被回收，使用方式： 
+   **软引用在程序内存不足时，会被回收，**使用方式： 
 
   ```java
   // 注意：wrf这个引用也是强引用，它是指向SoftReference这个对象的，
@@ -828,7 +864,7 @@ Collections是集合类的一个帮助类， 它包含有各种有关集合操�
 
 - 弱引用
 
-   弱引用就是只要JVM垃圾回收器发现了它，就会将之回收，使用方式：
+   **弱引用就是只要JVM垃圾回收器发现了它，就会将之回收**，使用方式：
 
   ```java
   WeakReference<String> wrf = new WeakReference<String>(str);
@@ -838,7 +874,7 @@ Collections是集合类的一个帮助类， 它包含有各种有关集合操�
 
 - 虚引用
 
-   虚引用的回收机制跟弱引用差不多，但是它被回收之前，会被放入`ReferenceQueue`中。注意哦，其它引用是被JVM回收后才被传入`ReferenceQueue`中的。由于这个机制，所以虚引用大多被用于引用销毁前的处理工作。还有就是，虚引用创建的时候，必须带有`ReferenceQueue`，使用例子： 
+   **虚引用的回收机制跟弱引用差不多，但是它被回收之前，会被放入`ReferenceQueue`中**。注意哦，其它引用是被JVM回收后才被传入`ReferenceQueue`中的。由于这个机制，所以虚引用大多被用于引用销毁前的处理工作。还有就是，虚引用创建的时候，必须带有`ReferenceQueue`，使用例子： 
 
   ```java
   PhantomReference<String> prf = new PhantomReference<String>(new String("str"), new ReferenceQueue<>());
@@ -868,7 +904,7 @@ List<Integer> iniData = new ArrayList<>()
 
 
 
-### 16、Java创建对象有几种方式？
+### TODO-16、Java创建对象有几种方式？
 
 java中提供了以下四种创建对象的方式:
 
@@ -2525,6 +2561,10 @@ C-Controller 控制器（接收请求—>调用模型—>根据结果派发页�
 
 @RequestMapping：用于处理请求 url 映射的注解，可用于类或方法上。用于类上，则表示类中的所有响应请求的方法都是以该地址作为父路径。
 
+@GetMapping:用于处理Get方式提交的请求。
+
+@PostMapping:用于处理Post方式的请求，参数在请求body中
+
 @RequestBody：注解实现接收http请求的json数据，将json转换为java对象。
 
 @ResponseBody：注解实现将conreoller方法返回对象转化为json对象响应给客户。
@@ -2535,7 +2575,7 @@ C-Controller 控制器（接收请求—>调用模型—>根据结果派发页�
 
 OOP面向对象，允许开发者定义纵向的关系，但并适用于定义横向的关系，导致了大量代码的重复，而不利于各个模块的重用。
 
-AOP，一般称为面向切面，作为面向对象的一种补充，用于将那些与业务无关，但却对多个对象产生影响的公共行为和逻辑，抽取并封装为一个可重用的模块，这个模块被命名为“切面”（Aspect），减少系统中的重复代码，降低了模块间的耦合度，同时提高了系统的可维护性。可用于权限认证、日志、事务处理。
+AOP，一般称为面向切面，作为面向对象的一种补充，用于将那些与业务无关，但却对多个对象产生影响的公共行为和逻辑，抽取并封装为一个可重用的模块，这个模块被命名为“切面”（Aspect），减少系统中的重复代码，降低了模块间的耦合度，同时提高了系统的可维护性。可用于**权限认证、日志、事务处理、切换数据源、防重复提交**等。
 
 AOP实现的关键在于 代理模式，AOP代理主要分为静态代理和动态代理。静态代理的代表为AspectJ；动态代理则以Spring AOP为代表。
 
@@ -2820,7 +2860,7 @@ Mybatis仅支持association关联对象和collection关联集合对象的延迟�
 
 用来简化spring应用的初始搭建以及开发过程 使用特定的方式来进行配置（properties或yml文件）
 
-创建独立的spring引用程序 main方法运行 
+创建独立的spring应用程序 ，main方法运行 
 
 嵌入的Tomcat 无需部署war文件 
 
@@ -5671,7 +5711,7 @@ zcat [gzip] (1) – compress or expand files复制代码
 - 列出文件列表：ls【参数 -a -l】
 - 创建目录和移除目录：mkdir rmdir
 - 用于显示文件后几行内容：tail，例如：  tail -n 1000：显示最后1000行 
-- 打包：tar -xvf
+- 解压：tar -xvf
 - 打包并压缩：tar -zcvf
 - 查找字符串：grep
 - 显示当前所在目录：pwd创建空文件：touch
