@@ -2806,8 +2806,6 @@ Error creating bean with name 'a': Requested bean is currently in creation: Is t
 
  Spring容器先创建单例A，A依赖B，然后将A放在“当前创建Bean池”中，此时创建B,B依赖C ,然后将B放在“当前创建Bean池”中,此时创建C，C又依赖A， 但是，此时A已经在池中，所以会报错，，因为在池中的Bean都是未初始化完的，所以会产生依赖错误 。（初始化完的Bean会从池中移除）。这就是循环依赖问题。
 
-
-
 #### 第二种：setter方式单例
 
 首先我们先了解下Spring中Bean的初始化流程图
@@ -2899,6 +2897,54 @@ Error creating bean with name 'a': Requested bean is currently in creation: Is t
 **为什么原型模式就报错了呢？**
 
 对于“prototype”作用域Bean，Spring容器无法完成依赖注入，因为“prototype”作用域的Bean，Spring容器不进行缓存，因此无法提前暴露一个创建中的Bean。
+
+### 15、BeanFactory 和ApplicationContext的区别
+
+首先，我们来看看这二者是如何获取容器中的Bean的：
+
+BeanFactory
+
+```java
+ClassPathResource resource = new ClassPathResource("spring.xml");
+BeanFactory factory = new XmlBeanFactory(resource);
+Human human = context.getBean("human", Human.class);
+
+// 注：XmlBeanFactory 已废弃，官方不推荐使用，替代方案如下
+BeanFactory factory = new DefaultListableBeanFactory();
+BeanDefinitionReader bdr = new XmlBeanDefinitionReader((BeanDefinitionRegistry)factory);
+bdr.loadBeanDefinitions(resource);
+Human human = factory1.getBean(Human.class);
+```
+
+ApplicationContext
+
+```java
+ApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring.xml");
+Human human = context.getBean("human", Human.class);
+```
+
+**相同点**：二者都可以用于Bean实例的创建
+
+**不同点**：
+
+1、创建Bean的时间点不同
+
+BeanFactory在启动的时候，不会创建Bean实例，只有在getBean时，才会创建Bean实例。
+
+ApplicationContext在启动的时候，即new ClassPathXmlApplicationContext("classpath:spring.xml")的时候，Bean实例就开始创建了。
+
+2、级别不同
+
+ApplicationContext接口继承了ListableBeanFactory, HierarchicalBeanFactory，而这两个接口又继承了BeanFactory。BeanFactory是SpringIOC容器中创建Bean的顶级接口。
+
+![](https://github.com/xutingyin/draw/blob/master/images/spring/ioc/ApplicationContext.png?raw=true)
+
+
+
+BeanFactory参考：https://www.cnblogs.com/zrtqsk/p/4028453.html
+
+
+
 
 
 ## MyBatis篇
