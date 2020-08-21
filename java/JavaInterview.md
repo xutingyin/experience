@@ -2941,6 +2941,10 @@ ApplicationContext接口继承了ListableBeanFactory, HierarchicalBeanFactory，
 
 
 
+3、支持的特性不同，spring官网提供
+
+![](https://github.com/xutingyin/draw/blob/master/images/spring/ioc/BeanFactory-Application.png?raw=true)
+
 BeanFactory参考：https://www.cnblogs.com/zrtqsk/p/4028453.html
 
 
