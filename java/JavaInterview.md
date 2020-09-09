@@ -357,7 +357,7 @@
 
 <!-- /TOC -->
 
-## 基础篇
+## Java基础篇
 
 
 
@@ -3161,7 +3161,7 @@ Spring Boot提供一系列端点可以监控服务及应用，做健康检测。
 
 启动类上面的注解是@SpringBootApplication，它也是 Spring Boot 的核心注解，主要组合包含了以下 3 个注解：
 
-@SpringBootConfiguration：组合了 @Configuration 注解，实现配置文件的功能。
+@SpringBootConfiguration：组合了 @Configuration 注解，实现读取spring.factories配置文件的功能。
 
 @EnableAutoConfiguration：打开自动配置的功能，也可以关闭某个自动配置的选项，如关闭数据源自动配置功能： @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })。
 
@@ -3417,7 +3417,7 @@ mysql常用引擎包括：MYISAM、Innodb、Memory、MERGE
 
 1. InnoDB支持事务，MyISAM不支持，对于InnoDB每一条SQL语言都默认封装成事务，自动提交，这样会影响速度，所以最好把多条SQL语言放在begin和commit之间，组成一个事务；
 2. InnoDB支持外键，而MyISAM不支持。对一个包含外键的InnoDB表转为MYISAM会失败；
-3. InnoDB是聚集索引，数据文件是和索引绑在一起的，必须要有主键，通过主键索引效率很高。但是辅助索引需要两次查询，先查询到主键，然后再通过主键查询到数据。因此，主键不应该过大，因为主键太大，其他索引也都会很大。而MyISAM是非聚集索引，数据文件是分离的，索引保存的是数据文件的指针。主键索引和辅助索引是独立的。
+3. InnoDB是**聚集索引，数据文件是和索引绑在一起的**，必须要有主键，通过主键索引效率很高。但是辅助索引需要两次查询，先查询到主键，然后再通过主键查询到数据。因此，主键不应该过大，因为主键太大，其他索引也都会很大。而MyISAM是**非聚集索引，数据文件是分离的，索引保存的是数据文件的指针**。主键索引和辅助索引是独立的。
 4. InnoDB不保存表的具体行数，执行select count(*) from table时需要全表扫描。而MyISAM用一个变量保存了整个表的行数，执行上述语句时只需要读出该变量即可，速度很快；
 5. Innodb不支持全文索引，而MyISAM支持全文索引，查询效率上MyISAM要高；
 
@@ -3500,7 +3500,9 @@ Innodb：更新（删除）操作频率也高，或者要保证数据的完整�
 
 6、应尽量避免在 where 子句中对字段进行 null 值判断，否则将导致引擎放弃使用索引而进行全表扫描，如： select id from t where num is null 可以在num上设置默认值0，确保表中num列没有null值，然后这样查询： select id from t where num=0 
 
+#### TODO为什么会出现全表扫描？
 
+​	
 
 ### 7、简单说一说drop、delete与truncate的区别
 
@@ -3561,7 +3563,7 @@ delete语句是dml,这个操作会放到rollback segement中,事务提交之后�
 MySQL InnoDB 存储引擎的默认支持的隔离级别是 **REPEATABLE-READ（可重读）**。我们可以通过`SELECT @@tx_isolation;`命令来查看
 
 ```
-mysql> SELECT @@tx_isolation;
+mysql> SELECT @@tx_isolation;//mysql8 已经改为 transaction_isolation
 +-----------------+
 | @@tx_isolation  |
 +-----------------+
@@ -3751,6 +3753,30 @@ drop PRIMARY KEY
 ```
 
  但通常不会删除主键，因为设计主键一定与业务逻辑无关。 
+
+### 17、为什么mysql的索引使用B+树，而MongoDB中使用B树
+
+参考：https://www.cnblogs.com/rjzheng/p/12316685.html
+
+首先我们看下B树和B+树的区别：
+
+#### B树
+
+B树显著的两个特点：
+
+①树中的每个节点都存储数据
+
+②叶子节点之间无指针相连。
+
+#### B+树
+
+B+树显著的两个特点：
+
+①树中的只有叶子节点存储数据。
+
+②叶子节点之间有链指针关联
+
+正是由于上述两种不同结构，所以B树更适合那种进行单一查询操作，B+树更适合遍历操作。而MongoDB的设计就是期望从一次查询就能查出想要的结果，而MySQL是关系型数据库，避免不了对表的遍历操作。所以这两种数据结构都有各自的应用场景，没有孰优孰劣，只有谁更适合特定的应用场景。
 
 ## Redis篇
 
