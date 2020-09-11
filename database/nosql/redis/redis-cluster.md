@@ -247,4 +247,4 @@ yum -y install ruby ruby-devel rubygems rpm-build
 
 3、集群登录
     
-    redis-cli -c -h127.0.0.1 -p7001   
+    redis-cli -c -h 127.0.0.1 -p 7001   
