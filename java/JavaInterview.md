@@ -2234,6 +2234,114 @@ synchronized 修饰的方法并没有 monitorenter 指令和 monitorexit 指令�
 
 
 
+### 30、简述线程池原理
+
+线程池的出现是为了解决频繁创建线程带来的上下文切换，线程创建、销毁所消耗的巨大的系统资源问题。我们可以预先创建一个指定数量【corePoolSize】的线程池，如果当实际使用的线程数超过了这个数值，再进行扩充线程数【maximumPoolSize】。这样我们能够线程需求量少的时候，线程需求过多时，都能合理的使用线程池来控制一个平衡值。更加合理的使用系统资源。
+
+### 31、讲讲ThreadPoolExecutor创建线程池的几个核心参数
+
+我们查看其构造函数
+
+```java
+public class ThreadPoolExecutor extends AbstractExecutorService {
+    .....
+    public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,
+            BlockingQueue<Runnable> workQueue);
+ 
+    public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,
+            BlockingQueue<Runnable> workQueue,ThreadFactory threadFactory);
+ 
+    public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,
+            BlockingQueue<Runnable> workQueue,RejectedExecutionHandler handler);
+ 
+    public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,
+        BlockingQueue<Runnable> workQueue,ThreadFactory threadFactory,RejectedExecutionHandler handler);
+    ...
+}
+```
+
+ThreadPoolExecutor 类有四个构造函数，但是通过源码我们可以看到，前面三个都最终调用了第四个构造函数，其它三个都在一定程度上采用了一些默认的参数，所以我们重点看第4个构造函数：
+
+```java
+public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+        if (corePoolSize < 0 ||
+            maximumPoolSize <= 0 ||
+            maximumPoolSize < corePoolSize ||
+            keepAliveTime < 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.acc = System.getSecurityManager() == null ?
+                null :
+                AccessController.getContext();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+```
+
+#### corePoolSize
+
+线程池中核心线程数，默认当任务来的时候，会创建corePoolSize个线程，如果超过了这个值，会进行扩充创建线程，达到maximumPoolSize个线程数。
+
+#### maximumPoolSize
+
+线程池中最大线程数，线程池中最多能够创建多少个线程。
+
+#### keepAliveTime
+
+存活时间，表示线程没有任务执行时最多保持多久时间会终止。默认情况下，只有当线程池中的线程数大于corePoolSize时，keepAliveTime才会起作用，直到线程池中的线程数不大于corePoolSize，即当线程池中的线程数大于corePoolSize时，如果一个线程空闲的时间达到keepAliveTime，则会终止，直到线程池中的线程数不超过corePoolSize。但是如果调用了allowCoreThreadTimeOut(boolean)方法，在线程池中的线程数不大于corePoolSize时，keepAliveTime参数也会起作用，直到线程池中的线程数为0
+
+#### unit
+
+参数keepAliveTime的时间单位，有7种取值
+
+```java
+TimeUnit.DAYS;               //天
+TimeUnit.HOURS;             //小时
+TimeUnit.MINUTES;           //分钟
+TimeUnit.SECONDS;           //秒
+TimeUnit.MILLISECONDS;      //毫秒
+TimeUnit.MICROSECONDS;      //微妙
+TimeUnit.NANOSECONDS;       //纳秒
+```
+
+#### workQueue
+
+阻塞队列，用于存储等待执行的任务。这里阻塞队列有如下几种选择：
+
+```java
+ArrayBlockingQueue;
+LinkedBlockingQueue;
+SynchronousQueue;
+```
+
+#### threadFactory
+
+线程工厂，用于创建线程，可以自定义线程名称，便于定位问题。
+
+#### handler
+
+拒绝任务策略，用于在拒绝需要执行的任务时，采用哪种策略。可选用的策略有如下：
+
+```java
+ThreadPoolExecutor.AbortPolicy:丢弃任务并抛出RejectedExecutionException异常。 
+ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常。 
+ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
+ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务 
+```
+
+
+
 ## Spring篇
 
 推荐阅读： [极客学院Spring Wiki](http://wiki.jikexueyuan.com/project/spring/transaction-management.html) 
