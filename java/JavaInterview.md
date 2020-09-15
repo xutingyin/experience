@@ -3153,6 +3153,8 @@ Mybatis使用RowBounds对象进行分页，它是针对ResultSet结果集执行�
 
 ### 7、 如何执行批量插入？
 
+##### 方案1：【个人未验证】
+
  首先,创建一个简单的insert语句: 
 
 ```java
@@ -3188,6 +3190,32 @@ Mybatis使用RowBounds对象进行分页，它是针对ResultSet结果集执行�
     }
 ```
 
+##### 方式2：mapper接口传入List,sql中使用for 循环插入
+
+```xml
+<insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO t_sys_import_export (
+        id,
+        upload_file_id,
+        upload_message_id,
+    	...
+        creater_name
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            UUID(),
+            #{item.uploadFileId},
+            #{item.uploadMessageId},
+            ...
+            #{item.createrName}
+            )
+        </foreach>
+    </insert>
+```
+
+
+
 
 
 ### 8、Xml映射文件中，除了常见的select|insert|updae|delete标签之外，还有哪些标签？
@@ -3219,11 +3247,51 @@ Mybatis仅支持association关联对象和collection关联集合对象的延迟�
 
 3）对于缓存数据更新机制，当某一个作用域(一级缓存 Session/二级缓存Namespaces)的进行了C/U/D 操作后，默认该作用域下所有 select 中的缓存将被 clear 掉并重新更新，如果开启了二级缓存，则只根据配置判断是否刷新。
 
+### 12、Mybatis如何返回插入主键？
+
+#### 情况1：主键为整型自增类型
+
+```xml
+<insert id="addUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+INSERT INTO users (username,password,nickname,token,reg_time,login_time) VALUES (#{username},#{password},#{nickname},#{token},#{regTime},#{loginTime})
+</insert>
+```
+
+主要使用：
+
+**useGeneratedKeys:**（仅对 insert 和 update 有用）这会令 MyBatis 使用 JDBC 的 getGeneratedKeys 方法来取出由数据库内部生成的主键（比如：像 MySQL 和 SQL Server 这样的关系数据库管理系统的自动递增字段），默认值：false。
+
+**keyProperty:**（仅对 insert 和 update 有用）唯一标记一个属性，MyBatis 会通过 getGeneratedKeys 的返回值或者通过 insert 语句的 selectKey 子元素设置它的键值，默认：unset。如果希望得到多个生成的列，也可以是逗号分隔的属性名称列表。(我这里mysql里的自增主键是id).
+
+#### 情况2：使用的是UUID或者自定义的一套varchar类型的唯一ID
+
+```xml
+<insert id="addUser" parameterType="User">
+    <selectKey resultType="String" order="AFTER" keyProperty="id">
+        SELECT LAST_INSERT_ID()
+    </selectKey>
+    INSERT INTO users (username,password,nickname,token,reg_time,login_time) VALUES
+    (#{username},#{password},#{nickname},#{token},#{regTime},#{loginTime})
+</insert>
+```
+
+**resultType：****返回类型**
+
+**order:**这可以被设置为 BEFORE 或 AFTER。如果设置为 BEFORE，那么它会首先选择主键，设置 keyProperty 然后执行插入语句。如果设置为 AFTER，那么先执行插入语句，然后是 selectKey 元素 - 这和像 Oracle 的数据库相似，在插入语句内部可能有嵌入索引调用。
+
+**keyProperty:**selectKey 语句结果应该被设置的目标属性。如果希望得到多个生成的列，也可以是逗号分隔的属性名称列表。
+
+**keyColumn:**匹配属性的返回结果集中的列名称。如果希望得到多个生成的列，也可以是逗号分隔的属性名称列表。(匹配pojo的属性和数据库字段)
+
+这样在执行了插入语句后就会返回插入成功的ID。
+
+需要注意的是，return userMapper.addUser(user);这样返回的是数据库实际影响的行数。也就是说插入成功一条就返回1，插入成功N条就返回N。想要得到返回的自增ID，需要这样写user.getId()
+
+### 13、Mybatis每一个mapper.xml都会对应一个mapper或者dao接口，讲讲它的原理
+
 
 
 ## SpringBoot篇
-
-
 
 ### 1、什么是SpringBoot？为什么要用SpringBoot
 
