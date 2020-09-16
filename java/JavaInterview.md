@@ -3220,7 +3220,9 @@ Mybatis使用RowBounds对象进行分页，它是针对ResultSet结果集执行�
 
 ### 8、Xml映射文件中，除了常见的select|insert|updae|delete标签之外，还有哪些标签？
 
- <resultMap>、<parameterMap>、<sql>、<include>、<selectKey>，加上动态sql的9个标签，其中<sql>为sql片段标签，通过<include>标签引入sql片段，<selectKey>为不支持自增的主键生成策略标签。 
+\<resultMap>、\<parameterMap>、\<sql>、\<include>、\<selectKey>
+
+加上动态sql的9个标签，其中\<sql>为sql片段标签，通过\<include>标签引入sql片段，\<selectKey>为不支持自增的主键生成策略标签。 
 
 
 
