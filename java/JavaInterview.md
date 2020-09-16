@@ -3289,6 +3289,30 @@ INSERT INTO users (username,password,nickname,token,reg_time,login_time) VALUES 
 
 ### 13、Mybatis每一个mapper.xml都会对应一个mapper或者dao接口，讲讲它的原理
 
+参考：
+
+https://www.jb51.net/article/181811.htm
+
+https://www.jianshu.com/p/419ce7b5c1ce
+
+核心类：
+
+#### SqlsessionFactory
+
+#### Sqlsession
+
+#### MapperRegistry
+
+#### MapperProxyFactory
+
+#### MapperProxy 
+
+MapperProxy采用JDK动态代理真正创建Mapper接口实现类
+
+#### MapperProxy.invoke()
+
+#### MapperMethod.execute() 执行CRUD
+
 
 
 ## SpringBoot篇
