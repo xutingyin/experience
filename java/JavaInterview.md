@@ -1334,7 +1334,7 @@ Class<Integer> integerType = Integer.TYPE;
 
 **1、JVM内存模型：**
 
-线程独占:栈,本地方法栈,程序计数器
+线程独占:栈(虚拟机栈),本地方法栈,程序计数器
 线程共享:堆,方法区 
 
 **2、栈：**
@@ -3078,7 +3078,7 @@ ApplicationContext接口继承了ListableBeanFactory, HierarchicalBeanFactory，
 
 ![](https://github.com/xutingyin/draw/blob/master/images/spring/ioc/ApplicationContext.png?raw=true)
 
-
+这就相当于，ApplicationContext完全包含了BeanFactory的功能，还扩展了其它的功能。
 
 3、支持的特性不同，spring官网提供
 
@@ -3086,9 +3086,9 @@ ApplicationContext接口继承了ListableBeanFactory, HierarchicalBeanFactory，
 
 BeanFactory参考：https://www.cnblogs.com/zrtqsk/p/4028453.html
 
+### 16、Spring注解原理.
 
-
-
+猜测：反射
 
 ## MyBatis篇
 
