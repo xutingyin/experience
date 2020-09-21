@@ -1688,7 +1688,7 @@ Sun JDK监控和故障处理命令有jps jstat jmap jhat jstack jinfo
 
 ### 18、调优工具
 
-常用调优工具分为两类,jdk自带监控工具：jconsole和jvisualvm，第三方有：MAT(Memory Analyzer Tool)、GChisto。
+常用调优工具分为两类,jdk自带监控工具：jconsole和jvisualvm，第三方有：MAT(Memory Analyzer Tool)、GChisto、JProfiler。
 
 - jconsole，Java Monitoring and Management Console是从java5开始，在JDK中自带的java监控和管理控制台，用于对JVM中内存，线程和类等的监控
 - jvisualvm，jdk自带全能工具，可以分析内存快照、线程快照；监控内存变化、GC变化等。
@@ -2768,7 +2768,7 @@ Spring AOP中的动态代理主要有两种方式，JDK动态代理和CGLIB动�
 
 首先说一下Servlet的生命周期：实例化，初始init，接收请求service，销毁destroy；
 
- Spring上下文中的Bean生命周期也类似，如下：
+ Spring上下文中的Bean生命周期也类似，分为四个大的阶段：实例化(Instantiation),属性设置(populate),初始化(Initialization),销毁(Destruction)；多个扩展点，扩展点又分为影响单个Bean和影响多个Bean。详细扩展如下：
 
 （1）实例化Bean：
 
@@ -2807,6 +2807,8 @@ Spring AOP中的动态代理主要有两种方式，JDK动态代理和CGLIB动�
 （8）destroy-method：
 
 最后，如果这个Bean的Spring配置中配置了destroy-method属性，会自动调用其配置的销毁方法。
+
+![](images/spring-create-bean.png)
 
 
 ### 11、 **解释Spring支持的几种bean的作用域。** 
@@ -3159,36 +3161,6 @@ private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-猜测：反射
 
 ## MyBatis篇
 
