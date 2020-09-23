@@ -1912,9 +1912,9 @@ sleep()方法导致了程序暂停执行指定的时间，让出cpu该其他线�
 
 一旦一个共享变量（类的成员变量、类的静态成员变量）被volatile修饰之后，那么就具备了两层语义：
 
-1）保证了不同线程对这个变量进行操作时的可见性，即一个线程修改了某个变量的值，这新值对其他线程来说是立即可见的,volatile关键字会强制将修改的值立即写入主存。
+1）保证了不同线程对这个变量进行操作时的**可见性**，即一个线程修改了某个变量的值，这新值对其他线程来说是立即可见的,volatile关键字会强制将修改的值立即写入主存。
 
-2）禁止进行指令重排序。
+2）**禁止进行指令重排序**。
 
 volatile 不是原子性操作
 
@@ -2298,7 +2298,32 @@ synchronized 修饰的方法并没有 monitorenter 指令和 monitorexit 指令�
 
 ### 30、简述线程池原理
 
+#### 概要
+
 线程池的出现是为了解决频繁创建线程带来的上下文切换，线程创建、销毁所消耗的巨大的系统资源问题。我们可以预先创建一个指定数量【corePoolSize】的线程池，如果当实际使用的线程数超过了这个数值，再进行扩充线程数【maximumPoolSize】。这样我们能够线程需求量少的时候，线程需求过多时，都能合理的使用线程池来控制一个平衡值。更加合理的使用系统资源。
+
+#### 线程池执行流程
+![](images/threadpool-execute.png)
+```yaml
+1、如果此时线程池中的数量小于corePoolSize，即使线程池中的线程都处于空闲状态，也要创建新的线程来处理被添加的任务。
+
+2、如果此时线程池中的数量等于corePoolSize，但是缓冲队列workQueue未满，那么任务被放入缓冲队列。
+
+3、如果此时线程池中的数量大于等于corePoolSize，缓冲队列workQueue满，并且线程池中的数量小于maximumPoolSize，建新的线程来处理被添加的任务。
+
+4、如果此时线程池中的数量大于corePoolSize，缓冲队列workQueue满，并且线程池中的数量等于maximumPoolSize，那么通过 handler所指定的策略来处理此任务。
+
+5、当线程池中的线程数量大于 corePoolSize时，如果某线程空闲时间超过keepAliveTime，线程将被终止。这样，线程池可以动态的调整池中的线程数。
+
+总结即：处理任务判断的优先级为 核心线程corePoolSize、任务队列workQueue、最大线程maximumPoolSize，如果三者都满了，使用handler处理被拒绝的任务。
+
+注意：
+    1、当workQueue使用的是无界限队列时，maximumPoolSize参数就变的无意义了，比如new LinkedBlockingQueue(),或者new ArrayBlockingQueue(Integer.MAX_VALUE);
+
+    2、使用SynchronousQueue队列时由于该队列没有容量的特性，所以不会对任务进行排队，如果线程池中没有空闲线程，会立即创建一个新线程来接收这个任务。maximumPoolSize要设置大一点。
+    
+    3、核心线程和最大线程数量相等时keepAliveTime无作用。
+```
 
 ### 31、讲讲ThreadPoolExecutor创建线程池的几个核心参数
 
@@ -2398,8 +2423,8 @@ SynchronousQueue;
 ```java
 ThreadPoolExecutor.AbortPolicy:丢弃任务并抛出RejectedExecutionException异常。 
 ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常。 
-ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
-ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务 
+ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）。
+ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务。
 ```
 
 
@@ -7495,4 +7520,4 @@ class Goods{
 4. 注意简历真实性，一定不要写自己不会的东西，或者带有欺骗性的内容
 5. 项目经历建议以时间倒序排序，另外项目经历不在于多，而在于有亮点。
 6. 如果内容过多的话，不需要非把内容压缩到一页，保持排版干净整洁就可以了。
-7. 简历最后最好能加上：“感谢您花时间阅读我的简历，期待能有机会和您共事。”这句话，显的你会很有礼貌。 
+7. 简历最后最好能加上：“感谢您在百忙之中阅读我的简历，期待能有机会与您共事。”这句话，显的你会很有礼貌。 
