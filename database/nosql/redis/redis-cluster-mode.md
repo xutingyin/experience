@@ -159,7 +159,7 @@ slave也可以进行数据写入[在redis.conf中配置 slave-read-only no]，�
  #　关闭保护模式
  protected-mode no
  #　端口号
- port １600０
+ port 16000
  # 后台运行
  daemonize yes
  # 解除挂载信息目录
@@ -227,25 +227,5 @@ master_link_status:up
 ......
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## 集群模式
+参考：redis-cluster-1.md
