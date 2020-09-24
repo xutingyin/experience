@@ -16,7 +16,7 @@
     * [13、 Collection包结构，与Collections的区别](#13-collection包结构与collections的区别)
     * [14、 Java的四种引用，强弱软虚](#14-java的四种引用强弱软虚)
     * [15、 泛型常用特点](#15-泛型常用特点)
-    * [TODO-16、Java创建对象有几种方式？](#todo-16java创建对象有几种方式)
+    * [16、Java创建对象有几种方式？](#16java创建对象有几种方式)
     * [17、有没有可能两个不相等的对象有相同的hashcode](#17有没有可能两个不相等的对象有相同的hashcode)
     * [18、深拷贝和浅拷贝的区别是什么?](#18深拷贝和浅拷贝的区别是什么)
     * [19、final有哪些用法?](#19final有哪些用法)
@@ -34,6 +34,11 @@
     * [31、Java反射的作用于原理](#31java反射的作用于原理)
     * [32、说说List,Set,Map三者的区别？](#32说说listsetmap三者的区别)
     * [33、什么是动态代理和静态代理](#33什么是动态代理和静态代理)
+  * [Java高级篇](#java高级篇)
+    * [1、HashMap原理](#1hashmap原理)
+      * [JDK1.7之前](#jdk17之前)
+      * [JDK1.7之后](#jdk17之后)
+    * [2、ConcurrentHashMap原理](#2concurrenthashmap原理)
   * [JVM篇](#jvm篇)
     * [1、知识点汇总](#1知识点汇总)
     * [2、知识点详解：](#2知识点详解)
@@ -95,6 +100,8 @@
     * [28、 执行execute()方法和submit()方法的区别是什么呢？](#28-执行execute方法和submit方法的区别是什么呢)
     * [29、 如何创建线程池](#29-如何创建线程池)
     * [30、简述线程池原理](#30简述线程池原理)
+      * [概要](#概要)
+      * [线程池执行流程](#线程池执行流程)
     * [31、讲讲ThreadPoolExecutor创建线程池的几个核心参数](#31讲讲threadpoolexecutor创建线程池的几个核心参数)
       * [corePoolSize](#corepoolsize)
       * [maximumPoolSize](#maximumpoolsize)
@@ -407,9 +414,8 @@
     * [其他一些小tips](#其他一些小tips)
 
 
+
 ## Java基础篇
-
-
 
 ### 1、 Java语言有哪些特点
 
@@ -950,7 +956,7 @@ List<Integer> iniData = new ArrayList<>()
 
 
 
-### TODO-16、Java创建对象有几种方式？
+### 16、Java创建对象有几种方式？
 
 java中提供了以下四种创建对象的方式:
 
@@ -1316,13 +1322,69 @@ Class<Integer> integerType = Integer.TYPE;
 
 - List,Set,Map如何相互转换
 
-- list 操作
+  **list 操作**
 
   ```java
-  Set 
+  List<User> list = new ArrayList(16);
+  list.add(new User(1L, "susan", 20));
+  list.add(new User(2L, "lisa", 20));
+  // list 转 set
+  Set set = new HashSet(list);
+  // list 转 map 可以转，但是需要想好使用什么作为key
+  Map<Long, User> userMap = new HashMap<>(16);
+  for (User user : list) {
+      userMap.put(user.getId(), user);
+  }
+  
+  //---------------------------- JDK 8----------------------------------
+  // list 转 map
+  Map<Long, User> maps = list.stream().collect(Collectors.toMap(User::getId, Function.identity()));
+  // list 转 set
+  Set<User> collect = list.stream().collect(Collectors.toSet());
   ```
 
+  **set操作**
+
+  ```java
+  Set<User> set = new HashSet(16);
+  set.add(new User(1L, "susan", 20));
+  set.add(new User(2L, "lisa", 20));
+  // set 转 list
+  List list = new ArrayList(set);
+  // set 转 map
+  Map<Long, User> map = new HashMap<>(16);
+  Iterator<User> iterator = set.iterator();
+  while (iterator.hasNext()) {
+      User user = iterator.next();
+      map.put(user.getId(), user);
+  }
+  //-----------------------------JDK8之后-----------------------------
+  // set 转 map
+  Map<Long, User> maps = set.stream().collect(Collectors.toMap(User::getId, Function.identity()));
+  // set 转 set
+  List<User> list = set.stream().collect(Collectors.toList());
   
+  ```
+
+  **map操作**
+
+  ```java
+  Map<String, String> map = new HashMap<>();
+  map.put("1", "test1");
+  map.put("2", "test2");
+  // map 转 set
+  Set<Map.Entry<String, String>> entries = map.entrySet();
+  // 或者 map 转 set
+  Set sets = new HashSet(map.values());
+  // map 转 list
+  List arrayList = new ArrayList(map.values());
+  
+  //----------------------------------JDK8-----------------------------------
+  
+  Set<Map.Entry<String, String>> set = map.entrySet().stream().collect(Collectors.toSet());
+  
+  List<String> list = map.values().stream().collect(Collectors.toList());
+  ```
 
 ### 33、什么是动态代理和静态代理
 
@@ -1331,6 +1393,76 @@ Class<Integer> integerType = Integer.TYPE;
 **静态代理**就是在程序启动之前代理类的.class文件就已经存在了。而代理类可能是程序员直接创建的.java文件，或者通过其它的工具生成的.java文件。但最终的结果都必须再通过编译器编译生成.class文件之后再启动程序。
 
 **动态代理** 在程序序运行的时候，通过反射机制自动创建需要的代理类【需要借助java.lang.reflect.Proxy类和实现InvocationHandler接口来实现方法调用】。动态代理如果是接口采用JDK动态代理，如果是类使用CGLIB方式实现动态代理。
+
+## Java高级篇
+
+### 1、HashMap原理
+
+参考：https://blog.csdn.net/qq_36520235/article/details/82417949
+
+#### JDK1.7之前
+
+> HashMap 底层是基于**数组+链表**组成的容器，key-value允许空值，不同步、线程不安全。
+
+**put过程:**
+
+```yaml
+1、先判断数组是否需要初始化；
+2、如果key为空，则put一个null值进去；
+3、根据key计算出hashcode；
+4、根据hashcode定位出所在的捅；
+5、如果捅是一个链表，则要判断里面的hashcode、key是否和传入的key相等，如果相等则进行覆盖，并返回原来的值；
+6、如果捅是空的，说明当前位置没有数据存入，新增一个Entry对象写入当前位置；
+7、当调用 addEntry 写入 Entry 时需要判断是否需要扩容。
+```
+
+**Get过程：**
+
+```yam
+1、根据key计算hashcode，定位到具体的桶；
+2、判断该位置是否是链表，不是链表就根据key、key的hashcode是否相等来返回值，是链表就遍历直到key以及hashcode相等的时候就返回值；
+3、没有匹配到值就返回null.
+```
+
+
+
+#### JDK1.7之后
+
+>底层采用 数组+链表+红黑树的数据结构
+
+> 1、超过TREEIFY_THRESHOLD=8阀值，链表转换为红黑树。
+>
+> 2、HashEntry 修改为 Node。
+>
+> 3、对大链表做了优化，修改为红黑树之后查询效率直接提高到了 `O(logn)`。
+
+**put过程：**
+
+```yaml
+1、判断键值对数组table[i]是否为空或为null，否则执行resize()进行扩容，初始容量是16；
+
+2、根据键值key计算hash值得到插入的数组索引i，如果table[i]==null，直接新建节点添加，转向⑥，如果table[i]不为空，转向③；
+
+3、判断table[i]的首个元素是否和key一样，如果相同直接覆盖value，否则转向④，这里的相同指的是hashCode以及equals；
+
+4、判断table[i] 是否为TreeNode，即table[i] 是否是红黑树，如果是红黑树，遍历发现该key不存在  则直接在树中插入键值对；遍历发现key已经存在直接覆盖value即可；
+
+5、如果table[i] 不是TreeNode则是链表节点，遍历发现该key不存在，则先添加在链表结尾， 判断链表长度是否大于8，大于8的话把链表转换为红黑树；遍历发现key已经存在直接覆盖value即可；
+
+6、插入成功后，判断实际存在的键值对数量size是否超多了最大容量threshold，如果超过，进行扩容。
+```
+
+**get过程：**
+
+```yaml
+1、table[i]的首个元素是否和key一样，如果相同则返回该value
+
+2、如果不同，先判断首元素是否是红黑树节点，如果是则去红黑树中查找；反之去链表中查找
+```
+
+### 2、ConcurrentHashMap原理
+
+参考：https://www.jianshu.com/p/e694f1e868ec
 
 ## JVM篇
 
@@ -1902,9 +2034,9 @@ notify() 是对notifyAll()的一个优化，但它有很精确的应用场景，
 
 对于sleep()方法，我们首先要知道该方法是属于Thread类中的。而wait()方法，则是属于Object类中的。
 
-sleep()方法导致了程序暂停执行指定的时间，让出cpu该其他线程，但是他的监控状态依然保持者，当指定的时间到了又会自动恢复运行状态。在调用sleep()方法的过程中，线程不会释放对象锁。
+sleep()方法导致了程序暂停执行指定的时间，让出cpu该其他线程，但是他的监控状态依然保持者，当指定的时间到了又会自动恢复运行状态。在调用sleep()方法的过程中，**线程不会释放对象锁。**
 
-当调用wait()方法的时候，线程会放弃对象锁，进入等待此对象的等待锁定池，只有针对此对象调用notify()方法后本线程才进入对象锁定池准备，获取对象锁进入运行状态。
+当调用wait()方法的时候，**线程会放弃对象锁**，进入等待此对象的等待锁定池，只有针对此对象调用notify()方法后本线程才进入对象锁定池准备，获取对象锁进入运行状态。
 
 
 
