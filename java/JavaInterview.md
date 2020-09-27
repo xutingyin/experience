@@ -39,6 +39,7 @@
       * [JDK1.7之前](#jdk17之前)
       * [JDK1.7之后](#jdk17之后)
     * [2、ConcurrentHashMap原理](#2concurrenthashmap原理)
+    * [3、synchronized和lock的区别。](#3synchronized和lock的区别)
   * [JVM篇](#jvm篇)
     * [1、知识点汇总](#1知识点汇总)
     * [2、知识点详解：](#2知识点详解)
@@ -69,7 +70,7 @@
     * [25、JDK 1.8之后Perm Space有哪些变动? MetaSpace⼤⼩默认是⽆限的么? 还是你们会通过什么⽅式来指定⼤⼩?](#25jdk-18之后perm-space有哪些变动-metaspace⼤⼩默认是⽆限的么-还是你们会通过什么⽅式来指定⼤⼩)
     * [26、跟JVM内存相关的几个核心参数图解](#26跟jvm内存相关的几个核心参数图解)
     * [27、如何启动系统的时候设置JVM的启动参数](#27如何启动系统的时候设置jvm的启动参数)
-  * [多线程&并发篇](#多线程并发篇)
+  * [多线程&并发-基础篇](#多线程并发-基础篇)
     * [1、Java中实现多线程有几种方法](#1java中实现多线程有几种方法)
     * [2、如何停止一个正在运行的线程](#2如何停止一个正在运行的线程)
     * [3、notify()和notifyAll()有什么区别？](#3notify和notifyall有什么区别)
@@ -110,6 +111,7 @@
       * [workQueue](#workqueue)
       * [threadFactory](#threadfactory)
       * [handler](#handler)
+  * [多线程&并发-高级篇](#多线程并发-高级篇)
   * [Spring篇](#spring篇)
     * [1、 Spring的IOC和AOP机制？](#1-spring的ioc和aop机制)
     * [2、 Spring中Autowired和Resource关键字的区别？](#2-spring中autowired和resource关键字的区别)
@@ -227,10 +229,16 @@
     * [9、Redis 常见性能问题和解决方案？](#9redis-常见性能问题和解决方案)
     * [10、为什么Redis的操作是原子性的，怎么保证原子性的？](#10为什么redis的操作是原子性的怎么保证原子性的)
     * [11、Redis事务](#11redis事务)
-    * [12、Redis集群模式](#12redis集群模式)
+  * [Redis高级篇](#redis高级篇)
+    * [1、Redis集群模式](#1redis集群模式)
       * [主从复制模式](#主从复制模式)
       * [哨兵模式](#哨兵模式)
       * [集群模式](#集群模式)
+    * [2、Redis内存淘汰策略](#2redis内存淘汰策略)
+    * [3、Redis、数据库如何做到数据一致性？](#3redis数据库如何做到数据一致性)
+      * [方案一：延时双删策略 + 缓存过期时间](#方案一延时双删策略--缓存过期时间)
+        * [具体方案步骤：](#具体方案步骤)
+      * [方案二: **异步更新缓存(基于订阅binlog的同步机制)**](#方案二-异步更新缓存基于订阅binlog的同步机制)
   * [SpringCloud篇](#springcloud篇)
     * [1、什么是SpringCloud](#1什么是springcloud)
     * [2、什么是微服务](#2什么是微服务)
@@ -412,7 +420,6 @@
     * [专业技能怎么写](#专业技能怎么写)
     * [排版注意事项](#排版注意事项)
     * [其他一些小tips](#其他一些小tips)
-
 
 
 ## Java基础篇
@@ -1464,6 +1471,45 @@ Class<Integer> integerType = Integer.TYPE;
 
 参考：https://www.jianshu.com/p/e694f1e868ec
 
+### 3、synchronized和lock的区别。
+
+①、Lock是java的一个interface接口，而synchronized是Java中的关键字，synchronized是由JDK实现的，不需要程序员编写代码去控制加锁和释放；Lock的接口如下：
+
+```java
+public interface Lock {
+    void lock();
+    void lockInterruptibly() throws InterruptedException;
+    boolean tryLock();
+    boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
+    void unlock();
+    Condition newCondition();
+}
+```
+
+②、synchronized修饰的代码在执行异常时，jdk会自动释放线程占有的锁，不需要程序员去控制释放锁，因此不会导致死锁现象发生；但是，当Lock发生异常时，如果程序没有通过unLock()去释放锁，则很可能造成死锁现象，因此Lock一般都是在finally块中释放锁；格式如下：
+
+
+
+```csharp
+Lock lock = new LockImpl; // new 一个Lock的实现类
+lock.lock();  // 加锁
+try{
+    //todo
+}catch(Exception ex){
+     // todo
+}finally{
+    lock.unlock();   //释放锁
+}
+```
+
+ ③、Lock可以让等待锁的线程响应中断处理，如tryLock(long time, TimeUnit unit)，而synchronized却不行，使用synchronized时，等待的线程会一直等待下去，不能够中断，程序员无法控制；
+ ④、synchronized是非公平锁，Lock可以设置是否公平锁，默认是非公平锁；
+ ⑤、Lock的实现类ReentrantReadWriteLock提供了readLock()和writeLock()用来获取读锁和写锁的两个方法，这样多个线程可以进行同时读操作；
+ ⑥、Lock锁的范围有局限性，仅适用于代码块范围，而synchronized可以锁住代码块、对象实例、类；
+ ⑦、Lock可以绑定条件，实现分组唤醒需要的线程；synchronized要么随机唤醒一个，要么唤醒全部线程。
+
+
+
 ## JVM篇
 
 
@@ -1957,7 +2003,7 @@ MetaSpace大小默认没有限制，一般根据系统内存的大小。JVM会�
 
 
 
-## 多线程&并发篇
+## 多线程&并发-基础篇
 
 
 
@@ -2559,7 +2605,11 @@ ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后
 ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务。
 ```
 
+## 多线程&并发-高级篇
 
+多数为JUC工具包中的类
+
+参考：https://juejin.im/post/6863862256791191560#heading-38
 
 ## Spring篇
 
@@ -4075,10 +4125,11 @@ Spring Boot 也提供了其它的启动器项目包括，包括用于开发特�
 
 ### 1、数据库的三范式是什么
 
-第一范式：列不可再分
-第二范式：行可以唯一区分，主键约束
-第三范式：表的非主属性不能依赖与其他表的非主属性 外键约束
-且三大范式是一级一级依赖的，第二范式建立在第一范式上，第三范式建立第一第二范式上。 
+**第一范式(1NF)**：表中的每一列不可再分,保证原子性。【**列不可再分**】
+**第二范式(2NF)**：满足1NF的基础上，要求表中的所有列，都必须依赖于主键，而不能有任何一列与主键没有关系。【**一张表只能表述一件事**】。例如：订单表只描述订单相关的信息，所有字段都必须与订单id相关。产品表描述产品相关的信息，所以所有字段都必须与产品id相关。因此不能在同一张表中出现订单信息和产品信息。
+**第三范式(3NF)**：在满足2NF的基础上，表的非主属性不能依赖与其他表的非主属性，只能依赖于主键 【 **外键约束**】
+
+三大范式是一级一级依赖的，第二范式建立在第一范式上，第三范式建立第一第二范式上。 1NF和2NF在于有没有分出两张表，2NF是说如果一张表中包含了多种不同的实体属性，那么就必须拆分成多张表，3NF要求已经拆分成了多张表，那么一张表中只能有另一张表的主键id，而不能有其它的任何信息(其它的信息一律使用主键在另一张表中进行关联查询出来)
 
 
 
@@ -4858,13 +4909,92 @@ Redis会将一个事务中的所有命令序列化，然后按顺序执行。
 3）通过调用DISCARD，客户端可以清空事务队列，并放弃执行事务， 并且客户端会从事务状态中退出。
 4）WATCH 命令可以为 Redis 事务提供 check-and-set （CAS）行为。 可以监控一个或多个键，一旦其中有一个键被修改（或删除），之后的事务就不会执行，监控一直持续到EXEC命令。
 
-### 12、Redis集群模式
+## Redis高级篇
+
+### 1、Redis集群模式
 
 #### 主从复制模式
 
 #### 哨兵模式
 
 #### 集群模式
+
+### 2、Redis内存淘汰策略
+
+Redis5.0之前，分别有6种不同的淘汰策略volatile-lru,allkeys-lru,volatile-random,allkeys-random,volatile-ttl,noeviction。redis5.0之后新增了两种淘汰策略：volatile-lfu,allkeys-lfu。接下来我们分别看看这8中内存数据淘汰策略的区别：
+
+```yaml
+（1）volatile-lru：从已设置过期时间的数据集中挑选最近最少使用的数据淘汰。
+
+（2）volatile-ttl：从已设置过期时间的数据集中挑选将要过期的数据淘汰。
+
+（3）volatile-random：从已设置过期时间的数据集中任意选择数据淘汰。
+
+（4）volatile-lfu：从已设置过期时间的数据集挑选使用频率最低的数据淘汰。
+
+（5）allkeys-lru：从数据集中挑选最近最少使用的数据淘汰
+
+（6）allkeys-lfu：从数据集中挑选使用频率最低的数据淘汰。
+
+（7）allkeys-random：从数据集（server.db[i].dict）中任意选择数据淘汰
+
+（8）no-enviction（驱逐）：禁止驱逐数据，这也是默认策略。意思是当内存不足以容纳新入数据时，新写入操作就会报错，请求可以继续进行，线上任务也不能持续进行，采用no-enviction策略可以保证数据不被丢失。
+```
+
+### 3、Redis、数据库如何做到数据一致性？
+
+#### 方案一：延时双删策略 + 缓存过期时间
+
+##### 具体方案步骤：
+
+```yaml
+1）先删除缓存
+
+2）再写数据库
+
+3）休眠500毫秒  # 这里根据你实际的业务场景耗时而定
+
+4）再次删除缓存
+```
+
+**设置缓存过期时间**：
+
+从理论上来说，给缓存设置过期时间，是保证最终一致性的解决方案。所有的写操作以数据库为准，只要到达缓存过期时间，则后面的读请求自然会从数据库中读取新值然后回填缓存。
+
+**缺点：结合双删策略+缓存超时设置，这样最差的情况就是在超时时间内数据存在不一致，而且又增加了写请求的耗时。**
+
+#### 方案二: **异步更新缓存(基于订阅binlog的同步机制)**
+
+**1.技术整体思路：**
+
+MySQL binlog增量订阅消费+消息队列+增量数据更新到redis
+
+**1）读Redis**：热数据基本都在Redis
+
+**2）写MySQL**:增删改都是操作MySQL
+
+**3）更新Redis数据**：MySQ的数据操作binlog，来更新到Redis
+
+**2.Redis更新**
+
+**1）数据操作主要分为两大块：**
+
+- 一个是全量(将全部数据一次写入到redis)
+- 一个是增量（实时更新）
+
+这里说的是增量,指的是mysql的update、insert、delate变更数据。
+
+**2）读取binlog后分析 ，利用消息队列,推送更新各台的redis缓存数据。**
+
+这样一旦MySQL中产生了新的写入、更新、删除等操作，就可以把binlog相关的消息推送至Redis，Redis再根据binlog中的记录，对Redis进行更新。
+
+其实这种机制，很类似MySQL的主从备份机制，因为MySQL的主备也是通过binlog来实现的数据一致性。
+
+这里可以结合使用canal(阿里的一款开源框架)，通过该框架可以对MySQL的binlog进行订阅，而canal正是模仿了mysql的slave数据库的备份请求，使得Redis的数据更新达到了相同的效果。
+
+当然，这里的消息推送工具你也可以采用别的第三方：kafka、rabbitMQ等来实现推送更新Redis。
+
+**优点：异步操作，对mysql binlog 进行实时监控，然后进行数据同步到缓存，对原有的业务代码逻辑零侵入。**
 
 ## SpringCloud篇
 
